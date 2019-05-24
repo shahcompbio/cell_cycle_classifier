@@ -301,6 +301,11 @@ def get_data(sas):
         data['sample_id'] = [a.split('-')[0] for a in data['cell_id']]
         data['library_id'] = [a.split('-')[1] for a in data['cell_id']]
 
+    # Fix total_mapped_reads_hmmcopy column
+    fix_read_count = metrics_data['total_mapped_reads_hmmcopy'].isnull()
+    metrics_data.loc[fix_read_count, 'total_mapped_reads_hmmcopy'] = (
+        metrics_data.loc[fix_read_count, 'total_mapped_reads'])
+
     metrics_data = metrics_data.query('total_mapped_reads_hmmcopy > 500000')
 
     logging.info('library sizes:\n{}'.format(metrics_data.groupby('library_id').size()))

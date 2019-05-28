@@ -71,6 +71,10 @@ def train_classify(cn_filename, metrics_filename, align_metrics_filename, predic
     metrics_data = pd.read_csv(metrics_filename)
     align_metrics_data = pd.read_csv(align_metrics_filename)
 
+    for data in (cn_data, metrics_data, align_metrics_data):
+        data['sample_id'] = data['cell_id'].apply(lambda a: a.split('-')[0])
+        data['library_id'] = data['cell_id'].apply(lambda a: a.split('-')[1])
+
     logging.info('calculating features')
 
     feature_data = features.calculate_features(

@@ -56,4 +56,5 @@ setup(
     ],
     test_suite='tests',
     tests_require=test_requirements,
+    package_data={'':['data/training/feature_data.csv.gz']},
 )

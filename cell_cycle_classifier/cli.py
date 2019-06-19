@@ -7,6 +7,7 @@ import pandas as pd
 
 import cell_cycle_classifier.model as model
 import cell_cycle_classifier.features as features
+import cell_cycle_classifier.api as api 
 
 LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 
@@ -53,43 +54,11 @@ def get_features(features_filename, shared_access_signature, figures_prefix=None
 @click.argument('predictions_filename')
 @click.option('--figures_prefix')
 def train_classify(cn_filename, metrics_filename, align_metrics_filename, predictions_filename, figures_prefix=None):
-    logging.info('training a classifier')
-
-    training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/feature_data.csv.gz')
-
-    training_data = pd.read_csv(training_data_filename)
-
-    classifier, stats = model.train_test_model(
-        training_data,
-        figures_prefix=figures_prefix,
-        random_seed=42,
-    )
-
-    logging.info(stats)
-
     cn_data = pd.read_csv(cn_filename)
     metrics_data = pd.read_csv(metrics_filename)
     align_metrics_data = pd.read_csv(align_metrics_filename)
 
-    for data in (cn_data, metrics_data, align_metrics_data):
-        data['sample_id'] = data['cell_id'].apply(lambda a: a.split('-')[0])
-        data['library_id'] = data['cell_id'].apply(lambda a: a.split('-')[1])
-
-    logging.info('calculating features')
-
-    feature_data = features.calculate_features(
-        cn_data,
-        metrics_data,
-        align_metrics_data,
-        figures_prefix=figures_prefix,
-    )
-
-    logging.info('predicting cell cycle')
-
-    predictions = model.predict(
-        classifier,
-        feature_data,
-    )
+    predictions = api.train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=figures_prefix)
 
     predictions.to_csv(predictions_filename, index=False)
 

@@ -215,6 +215,8 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
             slope3 = np.polyfit(cell_data['gc'].values, cell_data['copy3_0'].values, 1)[1]
             slope2 = np.polyfit(cell_data['gc'].values, cell_data['copy3_1'].values, 1)[1]
             slope = np.polyfit(cell_data['gc'].values, cell_data['norm_reads'].values, 1)[1]
+            if np.isnan([correlation, correlation0, correlation1, correlation2, correlation3]).any():
+                continue
             library_corr_data.append(dict(
                 correlation=correlation,
                 correlation0=correlation0,

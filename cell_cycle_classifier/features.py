@@ -106,7 +106,7 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
             agg_data = agg_data.groupby(['chr', 'start'])[reads_col].sum().reset_index()
             agg_data = agg_data.merge(cn_data[['chr', 'start', 'gc']].drop_duplicates())
 
-            z = np.polyfit(agg_data['gc'].values, agg_data[reads_col].values, 3)
+            z = np.polyfit(agg_data['gc'].values, agg_data[reads_col].astype(float).values, 3)
             p = np.poly1d(z)
 
             if figures_prefix is not None:

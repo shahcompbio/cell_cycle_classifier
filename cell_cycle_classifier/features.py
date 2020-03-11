@@ -88,6 +88,10 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         library_cn_data = library_cn_data.query('state > 0').copy()
         library_cn_data['norm_reads'] = library_cn_data['norm_reads'] / library_cn_data['state']
 
+        if len(library_cn_data.index) == 0:
+            logging.warning(f'library {library_id} filtered entirely')
+            continue
+
         #
         # Correct GC with aggregate data
         #

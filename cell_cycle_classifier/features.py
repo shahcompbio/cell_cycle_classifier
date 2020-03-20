@@ -247,6 +247,7 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         plt.close('all')
 
     corr_data = pd.concat(corr_data, sort=True, ignore_index=True)
+    corr_data = corr_data.dropna()
     
     ploidy = cn_data.groupby('cell_id')['state'].mean().rename('ploidy').reset_index()
 

@@ -1,4 +1,3 @@
--e git+git@github.com:shahcompbio/cell_cycle_classifier.git@5e08e684bc4725fa56bf68249162e8767041631d#egg=cell_cycle_classifier
 Click==7.0
 cycler==0.10.0
 joblib==0.13.2

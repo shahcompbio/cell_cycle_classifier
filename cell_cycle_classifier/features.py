@@ -261,24 +261,24 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
 
 
 cn_data_urls = [
-    'https://singlecelldata.blob.core.windows.net/results/SC-1563/results/results/hmmcopy_autoploidy/A90553C_multiplier0_reads.csv.gz',
-    'https://singlecelldata.blob.core.windows.net/results/SC-1561/results/results/hmmcopy_autoploidy/A73044A_multiplier0_reads.csv.gz',
-    'https://singlecelldata.blob.core.windows.net/results/SC-1583/results/results/hmmcopy_autoploidy/A96139A_multiplier0_reads.csv.gz',
-    'https://singlecelldata.blob.core.windows.net/results/SC-1585/results/results/hmmcopy_autoploidy/A96147A_multiplier0_reads.csv.gz',
+    'https://singlecellresults.blob.core.windows.net/results/SC-1563/results/results/hmmcopy_autoploidy/A90553C_multiplier0_reads.csv.gz',
+    'https://singlecellresults.blob.core.windows.net/results/SC-1561/results/results/hmmcopy_autoploidy/A73044A_multiplier0_reads.csv.gz',
+    'https://singlecellresults.blob.core.windows.net/results/SC-1583/results/results/hmmcopy_autoploidy/A96139A_multiplier0_reads.csv.gz',
+    'https://singlecellresults.blob.core.windows.net/results/SC-1585/results/results/hmmcopy_autoploidy/A96147A_multiplier0_reads.csv.gz',
 ]
 
 metrics_data_urls = [
-    'https://singlecelldata.blob.core.windows.net/results/SC-1563/results/results/hmmcopy_autoploidy/A90553C_multiplier0_metrics.csv.gz',
-    'https://singlecelldata.blob.core.windows.net/results/SC-1561/results/results/hmmcopy_autoploidy/A73044A_multiplier0_metrics.csv.gz',
-    'https://singlecelldata.blob.core.windows.net/results/SC-1583/results/results/hmmcopy_autoploidy/A96139A_multiplier0_metrics.csv.gz',
-    'https://singlecelldata.blob.core.windows.net/results/SC-1585/results/results/hmmcopy_autoploidy/A96147A_multiplier0_metrics.csv.gz',
+    'https://singlecellresults.blob.core.windows.net/results/SC-1563/results/results/hmmcopy_autoploidy/A90553C_multiplier0_metrics.csv.gz',
+    'https://singlecellresults.blob.core.windows.net/results/SC-1561/results/results/hmmcopy_autoploidy/A73044A_multiplier0_metrics.csv.gz',
+    'https://singlecellresults.blob.core.windows.net/results/SC-1583/results/results/hmmcopy_autoploidy/A96139A_multiplier0_metrics.csv.gz',
+    'https://singlecellresults.blob.core.windows.net/results/SC-1585/results/results/hmmcopy_autoploidy/A96147A_multiplier0_metrics.csv.gz',
 ]
 
 align_metrics_data_urls = [
-    'https://singlecelldata.blob.core.windows.net/results/SC-1563/results/results/alignment/A90553C_alignment_metrics.csv.gz',
-    'https://singlecelldata.blob.core.windows.net/results/SC-1561/results/results/alignment/A73044A_alignment_metrics.csv.gz',
-    'https://singlecelldata.blob.core.windows.net/results/SC-1583/results/results/alignment/A96139A_alignment_metrics.csv.gz',
-    'https://singlecelldata.blob.core.windows.net/results/SC-1585/results/results/alignment/A96147A_alignment_metrics.csv.gz',
+    'https://singlecellresults.blob.core.windows.net/results/SC-1563/results/results/alignment/A90553C_alignment_metrics.csv.gz',
+    'https://singlecellresults.blob.core.windows.net/results/SC-1561/results/results/alignment/A73044A_alignment_metrics.csv.gz',
+    'https://singlecellresults.blob.core.windows.net/results/SC-1583/results/results/alignment/A96139A_alignment_metrics.csv.gz',
+    'https://singlecellresults.blob.core.windows.net/results/SC-1585/results/results/alignment/A96147A_alignment_metrics.csv.gz',
 ]
 
 cache_dir = './cachedir'

@@ -20,14 +20,16 @@ def cli():
 
 
 @cli.command()
+@click.argument('training_url_prefix')
 @click.argument('features_filename')
-@click.argument('shared_access_signature')
+@click.option('--shared_access_signature', default='')
 @click.option('--figures_prefix')
-def get_features(features_filename, shared_access_signature, figures_prefix=None):
+def get_features(training_url_prefix, features_filename, shared_access_signature='', figures_prefix=None):
     logging.info('obtaining training data')
 
     training_data = features.get_features(
-        shared_access_signature,
+        training_url_prefix,
+        shared_access_signature=shared_access_signature,
         figures_prefix=figures_prefix,
         proportion_s_train=0.3,
         proportion_s_test=0.3,

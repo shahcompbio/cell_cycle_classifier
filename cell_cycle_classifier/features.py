@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from sklearn.utils import shuffle
+from cell_cycle_classifier.rt_profile import add_rt_features
 
 
 all_feature_names = [
@@ -27,6 +28,8 @@ all_feature_names = [
     'standard_deviation_insert_size',
     'ploidy',
     'breakpoints',
+    'r_ratio',
+    'r_argmax'
 ]
 
 
@@ -204,6 +207,11 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
                 plt.title('gc corrected ' + corrected_column + ' ' + cell_id + ' ' + cell_cycle_state)
                 fig.savefig(figures_prefix + f'{library_id}_useinsert{use_insert_size}_gc_corrected.pdf')
 
+        library_cn_data = add_rt_features(library_cn_data)
+        print(library_cn_data.head())
+        print(library_cn_data.columns)
+        print(library_cn_data.shape)
+
         logging.info(f'statistical tests and tabulation')
         library_corr_data = []
         for cell_id, cell_data in library_cn_data.groupby('cell_id'):
@@ -219,6 +227,8 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
             slope3 = np.polyfit(cell_data['gc'].values, cell_data['copy3_0'].values, 1)[1]
             slope2 = np.polyfit(cell_data['gc'].values, cell_data['copy3_1'].values, 1)[1]
             slope = np.polyfit(cell_data['gc'].values, cell_data['norm_reads'].values, 1)[1]
+            r_ratio = cell_data['r_ratio'].values[0]  # all values should be same for the cell
+            r_argmax = cell_data['r_argmax'].values[0]  # all values should be same for the cell
             library_corr_data.append(dict(
                 correlation=correlation,
                 correlation0=correlation0,
@@ -232,6 +242,8 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
                 slope2=slope2,
                 slope3=slope3,
                 slope=slope,
+                r_ratio=r_ratio,
+                r_argmax=r_argmax
             ))
         library_corr_data = pd.DataFrame(library_corr_data)
         library_corr_data['library_id'] = library_id

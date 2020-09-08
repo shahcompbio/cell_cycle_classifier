@@ -21,7 +21,7 @@ def get_norm_reads_mat(cn):
 	""" Turn cn data into matrix where rows are loci and columns are cells """
 	cn['loci'] = cn.apply(lambda row : generate_bin_edge_id(row['chr'], row['start'], row['end']), axis = 1)
 
-	mat = cn.pivot(index='loci', columns='cell_id', values='norm_reads')
+	mat = cn.pivot(index='loci', columns='cell_id', values='copy2_1')
 
 	mat.reset_index(inplace=True)
 
@@ -153,12 +153,8 @@ def rt_correlation(rt, filtered_mat):
 						'r_S3', 'pval_S3', 'r_S4', 'pval_S4'])
 	df.set_index('cell_id', inplace=True)
 	for cell_name, cell_data in filtered_mat.iteritems():
-		print('cell_data', cell_data.shape)
-		print('rt slice', rt['rep_argmax'].shape)
-		# r_argmax, pval_argmax = pearsonr(cell_data, rt['rep_argmax'])
-		# r_ratio, pval_ratio = pearsonr(cell_data, rt['rep_ratio'])
 		try:
-			r_argmax, pval_argmax = pearsonr(cell_data, rt['rt_argmax'])
+			r_argmax, pval_argmax = pearsonr(cell_data, rt['rep_argmax'])
 		except:
 			r_argmax, pval_argmax = "NA", "NA"
 		try:
@@ -196,20 +192,8 @@ def rt_correlation(rt, filtered_mat):
 def add_rt_features(library_cn_data):
 	""" Takes in library_cn_data and adds replication timing correlations for each cell. """
 	mat = get_norm_reads_mat(library_cn_data)
-	print("mat")
-	print(mat.shape)
-	print(mat.head())
 	rt, filtered_mat = get_rt_annotation(mat)
-	print("rt")
-	print(rt.shape)
-	print(rt.head())
-	print("filtered_mat")
-	print(filtered_mat.shape)
-	print(filtered_mat.head())
 	df = rt_correlation(rt, filtered_mat)
-	print("df")
-	print(df.shape)
-	print(df.head())
 	library_cn_data = pd.merge(library_cn_data, df, on='cell_id')
-	return library_cn_data
+	return rt, library_cn_data
 

@@ -30,9 +30,9 @@ all_feature_names = [
     'standard_deviation_insert_size',
     'ploidy',
     'breakpoints',
-    # 'r_ratio',
-    # 'r_G1b',
-    # 'r_S4',
+    'r_ratio',
+    'r_G1b',
+    'r_S4',
     'num_unique_bk',
     'PC1',
     'PC2',
@@ -236,9 +236,9 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
             slope2 = np.polyfit(cell_data['gc'].values, cell_data['copy3_1'].values, 1)[1]
             slope = np.polyfit(cell_data['gc'].values, cell_data['norm_reads'].values, 1)[1]
             if use_rt_features:
-                # r_ratio = cell_data['r_ratio'].values[0]
-                # r_G1b = cell_data['r_G1b'].values[0]  # all values should be same for the cell
-                # r_S4 = cell_data['r_S4'].values[0]  # all values should be same for the cell
+                r_ratio = cell_data['r_ratio'].values[0]
+                r_G1b = cell_data['r_G1b'].values[0]  # all values should be same for the cell
+                r_S4 = cell_data['r_S4'].values[0]  # all values should be same for the cell
                 num_unique_bk = cell_data['num_unique_bk'].values[0]
                 PC1 = cell_data['PC1'].values[0]
                 PC2 = cell_data['PC2'].values[0]
@@ -256,9 +256,9 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
                     slope2=slope2,
                     slope3=slope3,
                     slope=slope,
-                    # r_ratio=r_ratio,
-                    # r_G1b=r_G1b,
-                    # r_S4=r_S4,
+                    r_ratio=r_ratio,
+                    r_G1b=r_G1b,
+                    r_S4=r_S4,
                     num_unique_bk=num_unique_bk,
                     PC1=PC1,
                     PC2=PC2,
@@ -439,8 +439,8 @@ def get_features(
         feature_names = all_feature_names
 
     # remove rt features if needed
-    # rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'num_unique_bk', 'PC1', 'PC2', 'PC3']
-    rt_features = ['num_unique_bk', 'PC1', 'PC2', 'PC3']
+    rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'num_unique_bk', 'PC1', 'PC2', 'PC3']
+    # rt_features = ['num_unique_bk', 'PC1', 'PC2', 'PC3']
     if use_rt_features is False and set(rt_features).issubset(set(feature_names)):
         feature_names = [x for x in feature_names if x not in rt_features]
 

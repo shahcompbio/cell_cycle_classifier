@@ -178,7 +178,7 @@ def confusion_mats(yg1, yg2, yp1, yp2, figures_prefix):
     ax[0].set_ylabel('True label')
     ax[0].set_xticklabels(classes)
     ax[0].set_yticklabels(classes)
-    ax[0].set_title('Confusion Matrix\nwith replication timing features')
+    ax[0].set_title('Confusion Matrix\nwith RT & PCA features')
 
     # subplot for classifier1
     confusion2 = confusion_matrix(yg2, yp2)
@@ -187,7 +187,7 @@ def confusion_mats(yg1, yg2, yp1, yp2, figures_prefix):
     ax[1].set_ylabel('True label')
     ax[1].set_xticklabels(classes)
     ax[1].set_yticklabels(classes)
-    ax[1].set_title('Confusion Matrix\nwithout replication timing features')
+    ax[1].set_title('Confusion Matrix\nwithout RT & PCA features')
 
     fig.savefig('{prefix}confusion_mats.png'.format(prefix=figures_prefix))
 

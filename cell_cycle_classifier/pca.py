@@ -113,7 +113,7 @@ def add_pca_features(rt, library_cn_data, num_pcs=3):
 	print('abs_corrs\n', abs_corrs)
 	flip_scores = [True if x<0 else False for x in corrs]
 	print('flip_scores\n', flip_scores)
-	res = sorted(range(len(abs_corrs)), key = lambda x: abs_corrs[x], reverse=True)[-num_pcs:]
+	res = sorted(range(len(abs_corrs)), key = lambda x: abs_corrs[x], reverse=True)[:num_pcs]
 	print('res\n', res)
 
 	trans_df = pd.DataFrame(transformed, index=mat.index)

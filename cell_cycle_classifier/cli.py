@@ -83,7 +83,8 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
     confusion_mats(yg1, yg2, yp1, yp2, figures_prefix)
     all_misclassified = misclassified_cells(y_g_p1, y_g_p2, y_p1_p2, cell_ids1, figures_prefix)
 
-    cn_missed = cn_data[cn_data['cell_id'] in list(all_misclassified)]
+    cn_data.set_index('cell_id', inplace=True)
+    cn_missed = cn_data.loc[list(all_misclassified), :]
     cn_missed.to_csv('test_cn_missed.tsv', sep='\t')
 
     logging.info(stats1)
@@ -143,9 +144,9 @@ def misclassified_cells(y_g_p1, y_g_p2, y_p1_p2, cell_ids, figures_prefix):
     ax.set_title('Summary of Misclassifications')
     ax.set_ylabel('number of cells')
     ax.set_xlabel('misclassification condition')
-    ax.set_xticklabels(['FP w/ rt features', 'FP w/o rt features', 'FN w/ rt features', 'FN w/o rt features',
-                        'FP both methods', 'FP only w/ rt features', 'FP only w/o rt features',
-                        'FN both methods', 'FN only w/ rt features', 'FN only w/o rt features'])
+    ax.set_xticklabels(['FP w/ rt & pca features', 'FP w/o rt & pca features', 'FN w/ rt & pca features', 'FN w/o rt & pca features',
+                        'FP both methods', 'FP only w/ rt & pca features', 'FP only w/o rt & pca features',
+                        'FN both methods', 'FN only w/ rt & pca features', 'FN only w/o rt & pca features'])
     fig.savefig('{prefix}misclassified_hist.png'.format(prefix=figures_prefix))
 
     # save legend as tsv

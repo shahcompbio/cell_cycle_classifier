@@ -81,32 +81,7 @@ def rt_correlation(rt, components):
 	return corrs
 
 
-def add_pca_features(rt, library_cn_data, num_pcs=3):
-	""" Takes in library_cn_data and adds pca features for each cell. """
-	mat = get_norm_reads_mat(library_cn_data)
-	print('mat\n', mat.shape, '\n', mat.head())
-
-	# filter out null
-	num_null = mat.isnull().sum(axis=1)
-	mat = mat[num_null <= 800]
-	mat = mat.dropna(axis='columns')
-	print('after filtering mat', mat.shape)
-
-	# any genomic loci dropped should also be removed from rt
-	print('rt before filtering', rt.shape)
-	rt = rt.loc[mat.columns, :]
-	print('rt after filtering', rt.shape)
-
-
-	# run pca to get scores and loadings
-	transformed, components = run_pca(mat, 10)
-	print('transformed shape', transformed.shape)
-	print('components shape', components.shape)
-
-	# store components as df with genomic position as the index
-	components = pd.DataFrame(components.T, index=mat.columns)
-	print('components df\n', components.shape, '\n', components.head())
-
+def sort_PCs_by_rt_correlation(rt, components, transformed, num_pcs, mat):
 	corrs = rt_correlation(rt, components)
 	print('corrs\n', corrs)
 	abs_corrs = [abs(x) for x in corrs]
@@ -129,6 +104,45 @@ def add_pca_features(rt, library_cn_data, num_pcs=3):
 			pca_data[f'PC{n+1}'] = -1*trans_df[idx]
 		else:
 			pca_data[f'PC{n+1}'] = trans_df[idx]
+
+	return pca_data
+
+
+
+def add_pca_features(library_cn_data, num_pcs=3, rt=None):
+	""" Takes in library_cn_data and adds pca features for each cell. """
+	mat = get_norm_reads_mat(library_cn_data)
+	print('mat\n', mat.shape, '\n', mat.head())
+
+	# filter out null
+	num_null = mat.isnull().sum(axis=1)
+	mat = mat[num_null <= 800]
+	mat = mat.dropna(axis='columns')
+	print('after filtering mat', mat.shape)
+
+
+	# run pca to get scores and loadings
+	transformed, components = run_pca(mat, 10)
+	print('transformed shape', transformed.shape)
+	print('components shape', components.shape)
+
+	# store components as df with genomic position as the index
+	components = pd.DataFrame(components.T, index=mat.columns)
+	print('components df\n', components.shape, '\n', components.head())
+
+	if rt is not None:
+		# any genomic loci dropped should also be removed from rt
+		print('rt before filtering', rt.shape)
+		rt = rt.loc[mat.columns, :]
+		print('rt after filtering', rt.shape)
+		# re-order PCs so that they are ranked by the replication timing correlation
+		pca_data = sort_PCs_by_rt_correlation(rt, components, transformed, num_pcs, mat)
+	# keep PCs in their original order
+	else:
+		pca_data = pd.DataFrame(transformed, index=mat.index)
+		pca_data = pca_data.iloc[:, :num_pcs]
+		pca_data.columns = [f'PC{n+1}' for n in range(len(pca_data.columns))]
+		pca_data = pca_data.reset_index().rename(columns={'index': 'cell_id'})
 
 	print('pca_data\n', pca_data.shape, '\n', pca_data.head())
 

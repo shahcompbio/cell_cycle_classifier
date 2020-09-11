@@ -67,7 +67,7 @@ def subset_by_cell_cycle(cn_data, proportion_s):
     return cell_ids
 
 
-def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion_s=None, figures_prefix=None, use_rt_features=True):
+def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion_s=None, figures_prefix=None, use_rt_features=True, use_pca_features=True):
     """ Calculate features based on copy number data
     
     Args:
@@ -77,6 +77,7 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         agg_proportion_s (float, optional): Proportion of s to use in aggregate correction. Defaults to None, all available.
         figures_prefix (str, optional): Prefix for figures. Defaults to None, no figures.
         use_rt_features (bool, optional): Mark false when replication timing features should be ignored.
+        use_pca_features (bool, optional): Mark false when PCA features should be ignored.
     
     Returns:
         pandas.DataFrame: Feature data
@@ -218,7 +219,12 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         if use_rt_features:
             library_cn_data = add_uniqe_bk(library_cn_data)
             rt, library_cn_data = add_rt_features(library_cn_data)
-            library_cn_data = add_pca_features(rt, library_cn_data)
+
+        if use_pca_features and use_rt_features:
+            library_cn_data = add_pca_features(library_cn_data, rt=rt)
+
+        if use_pca_features and not use_rt_features:
+            library_cn_data = add_pca_features(library_cn_data)
 
         logging.info(f'statistical tests and tabulation')
         library_corr_data = []
@@ -235,50 +241,30 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
             slope3 = np.polyfit(cell_data['gc'].values, cell_data['copy3_0'].values, 1)[1]
             slope2 = np.polyfit(cell_data['gc'].values, cell_data['copy3_1'].values, 1)[1]
             slope = np.polyfit(cell_data['gc'].values, cell_data['norm_reads'].values, 1)[1]
+            temp_dict = dict(
+                    correlation=correlation,
+                    correlation0=correlation0,
+                    correlation1=correlation1,
+                    correlation2=correlation2,
+                    correlation3=correlation3,
+                    pvalue=pvalue,
+                    cell_id=cell_id,
+                    slope0=slope0,
+                    slope1=slope1,
+                    slope2=slope2,
+                    slope3=slope3,
+                    slope=slope)
             if use_rt_features:
-                r_ratio = cell_data['r_ratio'].values[0]
-                r_G1b = cell_data['r_G1b'].values[0]  # all values should be same for the cell
-                r_S4 = cell_data['r_S4'].values[0]  # all values should be same for the cell
-                num_unique_bk = cell_data['num_unique_bk'].values[0]
-                PC1 = cell_data['PC1'].values[0]
-                PC2 = cell_data['PC2'].values[0]
-                PC3 = cell_data['PC3'].values[0]
-                library_corr_data.append(dict(
-                    correlation=correlation,
-                    correlation0=correlation0,
-                    correlation1=correlation1,
-                    correlation2=correlation2,
-                    correlation3=correlation3,
-                    pvalue=pvalue,
-                    cell_id=cell_id,
-                    slope0=slope0,
-                    slope1=slope1,
-                    slope2=slope2,
-                    slope3=slope3,
-                    slope=slope,
-                    r_ratio=r_ratio,
-                    r_G1b=r_G1b,
-                    r_S4=r_S4,
-                    num_unique_bk=num_unique_bk,
-                    PC1=PC1,
-                    PC2=PC2,
-                    PC3=PC3
-                ))
-            else:
-                library_corr_data.append(dict(
-                    correlation=correlation,
-                    correlation0=correlation0,
-                    correlation1=correlation1,
-                    correlation2=correlation2,
-                    correlation3=correlation3,
-                    pvalue=pvalue,
-                    cell_id=cell_id,
-                    slope0=slope0,
-                    slope1=slope1,
-                    slope2=slope2,
-                    slope3=slope3,
-                    slope=slope,
-                ))
+                temp_dict['r_ratio'] = cell_data['r_ratio'].values[0]
+                temp_dict['r_G1b'] = cell_data['r_G1b'].values[0]  # all values should be same for the cell
+                temp_dict['r_S4'] = cell_data['r_S4'].values[0]  # all values should be same for the cell
+                temp_dict['num_unique_bk'] = cell_data['num_unique_bk'].values[0]
+            if use_pca_features:
+                temp_dict['PC1'] = cell_data['PC1'].values[0]
+                temp_dict['PC2'] = cell_data['PC2'].values[0]
+                temp_dict['PC3'] = cell_data['PC3'].values[0]
+            library_corr_data.append(temp_dict)
+
         library_corr_data = pd.DataFrame(library_corr_data)
         library_corr_data['library_id'] = library_id
 
@@ -407,7 +393,8 @@ def get_features(
         proportion_s_train=None,
         proportion_s_test=None,
         random_seed=None,
-        use_rt_features=True
+        use_rt_features=True,
+        use_pca_features=True
     ):
     """ Train and test the model given annotated input copy number data.
     
@@ -419,7 +406,8 @@ def get_features(
         proportion_s_test (float, optional): Proportion of s-phase used in aggregate correction for testing. Defaults to None.
         random_seed (int, optional): Random seed for selecting test set. Defaults to None.
         use_rt_features (bool, optional): Mark false when replication timing features should be ignored.
-    
+        use_pca_features (bool, optional): Mark false when PCA features should be ignored.
+
     Returns:
         [type]: [description]
     """
@@ -438,12 +426,13 @@ def get_features(
     if feature_names is None:
         feature_names = all_feature_names
 
-    # remove rt features if needed
-    rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'num_unique_bk', 'PC1', 'PC2', 'PC3']
-    # rt_features = ['num_unique_bk', 'PC1', 'PC2', 'PC3']
+    # remove rt or pca feature names if necessary
+    rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'num_unique_bk']
+    pca_features = ['PC1', 'PC2', 'PC3']
     if use_rt_features is False and set(rt_features).issubset(set(feature_names)):
         feature_names = [x for x in feature_names if x not in rt_features]
-
+    if use_pca_features is False and set(pca_features).issubset(set(feature_names)):
+        feature_names = [x for x in feature_names if x not in pca_features]
     print('in features.py -- feature names\n', feature_names)
 
 
@@ -459,7 +448,8 @@ def get_features(
         align_metrics_data,
         agg_proportion_s=proportion_s_train,
         figures_prefix=training_figures_prefix,
-        use_rt_features=use_rt_features
+        use_rt_features=use_rt_features,
+        use_pca_features=use_pca_features
     )
 
     training_data = training_data.query('cell_cycle_state != "D"')

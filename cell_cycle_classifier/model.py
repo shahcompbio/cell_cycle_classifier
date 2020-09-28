@@ -95,7 +95,7 @@ def train_test_model(
         feature_names = features.all_feature_names
 
     # remove rt or pca feature names if necessary
-    rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'num_unique_bk']
+    rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'num_unique_bk', 'rt_ratio_slope']
     pca_features = ['PC1', 'PC2', 'PC3']
     if use_rt_features is False and set(rt_features).issubset(set(feature_names)):
         feature_names = [x for x in feature_names if x not in rt_features]

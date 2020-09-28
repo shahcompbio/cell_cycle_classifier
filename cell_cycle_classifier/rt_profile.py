@@ -195,5 +195,5 @@ def add_rt_features(library_cn_data):
 	rt, filtered_mat = get_rt_annotation(mat)
 	df = rt_correlation(rt, filtered_mat)
 	library_cn_data = pd.merge(library_cn_data, df, on='cell_id')
-	return rt, library_cn_data
+	return rt, library_cn_data, filtered_mat
 

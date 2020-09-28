@@ -40,8 +40,8 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
         proportion_s_train=0.3,
         proportion_s_test=0.3,
         random_seed=42,
-        use_rt_features=False,
-        use_pca_features=True
+        use_rt_features=True,
+        use_pca_features=False
     )
 
     training_data2 = features.get_features(
@@ -63,8 +63,8 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
         training_data,
         figures_prefix=figures_prefix,
         random_seed=42,
-        use_rt_features=False,
-        use_pca_features=True
+        use_rt_features=True,
+        use_pca_features=False
     )
 
     classifier2, stats2, yg2, yp2, ypp2, cell_ids2 = model.train_test_model(

@@ -150,9 +150,9 @@ def misclassified_cells(y_g_p1, y_g_p2, y_p1_p2, cell_ids, figures_prefix):
     ax.set_title('Summary of Misclassifications')
     ax.set_ylabel('number of cells')
     ax.set_xlabel('misclassification condition')
-    ax.set_xticklabels(['FP w/ rt & pca features', 'FP w/o rt & pca features', 'FN w/ rt & pca features', 'FN w/o rt & pca features',
-                        'FP both methods', 'FP only w/ rt & pca features', 'FP only w/o rt & pca features',
-                        'FN both methods', 'FN only w/ rt & pca features', 'FN only w/o rt & pca features'])
+    ax.set_xticklabels(['FP w/ PCA features', 'FP w/o PCA features', 'FN w/ PCA features', 'FN w/o PCA features',
+                        'FP both methods', 'FP only w/ PCA features', 'FP only w/o PCA features',
+                        'FN both methods', 'FN only w/ PCA features', 'FN only w/o PCA features'])
     fig.savefig('{prefix}misclassified_hist.png'.format(prefix=figures_prefix))
 
     # save legend as tsv
@@ -184,7 +184,7 @@ def confusion_mats(yg1, yg2, yp1, yp2, figures_prefix):
     ax[0].set_ylabel('True label')
     ax[0].set_xticklabels(classes)
     ax[0].set_yticklabels(classes)
-    ax[0].set_title('Confusion Matrix\nwith RT & PCA features')
+    ax[0].set_title('Confusion Matrix\nwith PCA features')
 
     # subplot for classifier1
     confusion2 = confusion_matrix(yg2, yp2)
@@ -193,7 +193,7 @@ def confusion_mats(yg1, yg2, yp1, yp2, figures_prefix):
     ax[1].set_ylabel('True label')
     ax[1].set_xticklabels(classes)
     ax[1].set_yticklabels(classes)
-    ax[1].set_title('Confusion Matrix\nwithout RT & PCA features')
+    ax[1].set_title('Confusion Matrix\nwithout PCA features')
 
     fig.savefig('{prefix}confusion_mats.png'.format(prefix=figures_prefix))
 

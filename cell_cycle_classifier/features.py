@@ -34,7 +34,6 @@ all_feature_names = [
     'r_G1b',
     'r_S4',
     'num_unique_bk',
-    'rt_ratio_slope',
     'PC1',
     'PC2',
     'PC3'
@@ -220,7 +219,6 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         if use_rt_features:
             library_cn_data = add_uniqe_bk(library_cn_data)
             rt, library_cn_data, filtered_mat = add_rt_features(library_cn_data)
-            rt['rep_ratio'] = pd.to_numeric(rt['rep_ratio'], errors='coerce')
 
         if use_pca_features and use_rt_features:
             library_cn_data = add_pca_features(library_cn_data, rt=rt)
@@ -261,17 +259,6 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
                 temp_dict['r_G1b'] = cell_data['r_G1b'].values[0]  # all values should be same for the cell
                 temp_dict['r_S4'] = cell_data['r_S4'].values[0]  # all values should be same for the cell
                 temp_dict['num_unique_bk'] = cell_data['num_unique_bk'].values[0]
-                print(cell_id)
-                # print(filtered_mat[cell_id].head())
-                # print(filtered_mat[cell_id].shape)
-                # print(filtered_mat[cell_id].values.shape)
-                # print(rt['rep_ratio'].head())
-                # print(rt['rep_ratio'].shape)
-                # print(rt['rep_ratio'].values.shape)
-
-                # calculate slopes
-                temp_dict['rt_ratio_slope'] = np.polyfit(rt['rep_ratio'].values, filtered_mat[cell_id].values, 1)[1]
-                print('slope', temp_dict['rt_ratio_slope'])
             if use_pca_features:
                 temp_dict['PC1'] = cell_data['PC1'].values[0]
                 temp_dict['PC2'] = cell_data['PC2'].values[0]
@@ -440,7 +427,7 @@ def get_features(
         feature_names = all_feature_names
 
     # remove rt or pca feature names if necessary
-    rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'num_unique_bk', 'rt_ratio_slope']
+    rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'num_unique_bk']
     pca_features = ['PC1', 'PC2', 'PC3']
     if use_rt_features is False and set(rt_features).issubset(set(feature_names)):
         feature_names = [x for x in feature_names if x not in rt_features]

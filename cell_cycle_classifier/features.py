@@ -262,15 +262,16 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
                 temp_dict['r_S4'] = cell_data['r_S4'].values[0]  # all values should be same for the cell
                 temp_dict['num_unique_bk'] = cell_data['num_unique_bk'].values[0]
                 print(cell_id)
-                print(filtered_mat[cell_id].head())
-                print(filtered_mat[cell_id].shape)
-                print(filtered_mat[cell_id].values.shape)
-                print(rt['rep_ratio'].head())
-                print(rt['rep_ratio'].shape)
-                print(rt['rep_ratio'].values.shape)
+                # print(filtered_mat[cell_id].head())
+                # print(filtered_mat[cell_id].shape)
+                # print(filtered_mat[cell_id].values.shape)
+                # print(rt['rep_ratio'].head())
+                # print(rt['rep_ratio'].shape)
+                # print(rt['rep_ratio'].values.shape)
 
                 # calculate slopes
                 temp_dict['rt_ratio_slope'] = np.polyfit(rt['rep_ratio'].values, filtered_mat[cell_id].values, 1)[1]
+                print('slope', temp_dict['rt_ratio_slope'])
             if use_pca_features:
                 temp_dict['PC1'] = cell_data['PC1'].values[0]
                 temp_dict['PC2'] = cell_data['PC2'].values[0]

@@ -29,6 +29,20 @@ all_feature_names = [
     'breakpoints',
 ]
 
+core_feature_names = [
+    'correlation',
+    'correlation0',
+    'correlation1',
+    'correlation2',
+    'correlation3',
+    'library_id',
+    'pvalue',
+    'slope',
+    'slope0',
+    'slope1',
+    'slope2',
+    'slope3'
+]
 
 align_metrics_columns = [
     'cell_id',
@@ -246,12 +260,18 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
 
         plt.close('all')
 
-    corr_data = pd.concat(corr_data, sort=True, ignore_index=True)
-    corr_data = corr_data.dropna()
-    
     ploidy = cn_data.groupby('cell_id')['state'].mean().rename('ploidy').reset_index()
 
+    if not corr_data:
+        corr_data = pd.DataFrame(index=align_metrics_data.index, columns=core_feature_names)
+        corr_data = corr_data.fillna(0)
+        corr_data['cell_id'] = align_metrics_data.cell_id
+    else:
+        corr_data = pd.concat(corr_data, sort=True, ignore_index=True)
+        corr_data = corr_data.dropna()
+
     corr_data = corr_data.merge(align_metrics_data[align_metrics_columns].drop_duplicates())
+
     corr_data = corr_data.merge(metrics_data[['cell_id', 'breakpoints']].drop_duplicates())
     if 'cell_cycle_state' in metrics_data:
         corr_data = corr_data.merge(metrics_data[['cell_id', 'cell_cycle_state']].drop_duplicates())

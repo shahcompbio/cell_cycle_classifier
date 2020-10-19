@@ -1,5 +1,5 @@
 import logging
-import seaborn
+import seaborn as sns
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -139,13 +139,22 @@ def train_test_model(
             plt.xlabel('False Positive Rate')
             plt.ylabel('True Positive Rate')
             plt.title(sample_id)
-            seaborn.despine(offset=True, trim=True)
-            fig.savefig(figures_prefix + '_' + sample_id + 'roc.pdf', bbox_inches='tight')
+            sns.despine(offset=True, trim=True)
+            fig.savefig(figures_prefix + sample_id + 'roc.pdf', bbox_inches='tight')
         
             fig = plt.figure()
             feature_importance = pd.Series(dict(zip(feature_names, classifier.feature_importances_)))
             feature_importance.plot.bar()
             fig.savefig(figures_prefix + 'features.pdf', bbox_inches='tight')
+
+            if use_rt_features:
+                fig = plt.figure()
+                sns.scatterplot(x=chunk['r_G1b'].values, y=chunk['r_S4'].values, hue=y_pred_proba)
+                plt.title(sample_id)
+                plt.xlabel('G1b (early) correlation')
+                plt.ylabel('S4 (late) correlation')
+                plt.legend(title='S-phase prob')
+                fig.savefig(figures_prefix + sample_id + '_rt_specificity.pdf', bbox_inches='tight')
 
         stats = dict(
             accuracy=metrics.accuracy_score(y, y_pred),

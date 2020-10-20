@@ -149,11 +149,11 @@ def train_test_model(
 
             if use_rt_features:
                 fig = plt.figure()
-                sns.scatterplot(x=chunk['r_G1b'].values, y=chunk['r_S4'].values, hue=y_pred_proba)
+                sns.scatterplot(x=chunk['r_G1b'].values, y=chunk['r_S4'].values, hue=y)
                 plt.title(sample_id)
                 plt.xlabel('G1b (early) correlation')
                 plt.ylabel('S4 (late) correlation')
-                plt.legend(title='S-phase prob')
+                plt.legend(title='S-phase status (flow)')
                 fig.savefig(figures_prefix + sample_id + '_rt_specificity.pdf', bbox_inches='tight')
 
         stats = dict(

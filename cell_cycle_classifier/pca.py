@@ -51,11 +51,6 @@ def rt_correlation(rt, components):
 	""" Find correlation between rep_ratio and each PC's loadings vector. """
 	corrs = []
 	for i, loadings_vector in components.iteritems():
-		print('loadings_vector', loadings_vector.shape)
-		print(loadings_vector.head())
-		print('loadings num null', loadings_vector.isnull().sum())
-		print('rt num null', rt['rep_ratio'].isnull().sum())
-
 		# remove loci that have NA or inf in loadings
 		loadings_vector.replace([np.inf, -np.inf], np.nan, inplace=True)
 		mask = loadings_vector.isnull()
@@ -68,10 +63,6 @@ def rt_correlation(rt, components):
 		temp_rt = temp_rt.loc[~mask]
 		temp_loadings = temp_loadings.loc[~mask]
 
-		print('temp_loadings shape', temp_loadings.shape)
-		print('temp_rt', temp_rt.shape)
-		print(temp_rt.head())
-
 		temp_loadings.to_csv('temp_loadings.tsv', sep='\t')
 		temp_rt.to_csv('temp_rt.tsv', sep='\t')
 
@@ -83,19 +74,12 @@ def rt_correlation(rt, components):
 
 def sort_PCs_by_rt_correlation(rt, components, transformed, num_pcs, mat):
 	corrs = rt_correlation(rt, components)
-	print('corrs\n', corrs)
 	abs_corrs = [abs(x) for x in corrs]
-	print('abs_corrs\n', abs_corrs)
 	flip_scores = [True if x<0 else False for x in corrs]
-	print('flip_scores\n', flip_scores)
 	res = sorted(range(len(abs_corrs)), key = lambda x: abs_corrs[x], reverse=True)[:num_pcs]
-	print('res\n', res)
 
 	trans_df = pd.DataFrame(transformed, index=mat.index)
 	trans_df = trans_df.reset_index().rename(columns={'index': 'cell_id'})
-	print('trans_df\n', trans_df.shape, '\n', trans_df.head())
-	print(trans_df['cell_id'].head())
-	print(trans_df[0].head())
 
 	pca_data = pd.DataFrame()
 	pca_data['cell_id'] = trans_df['cell_id']
@@ -112,15 +96,9 @@ def gc_correlation(gc, components):
 	""" Find correlation between the average gc profile and each PC's loadings vector. """
 	corrs = []
 	for i, loadings_vector in components.iteritems():
-		print('loadings_vector', loadings_vector.shape)
-		print(loadings_vector.head())
-		print('loadings num null', loadings_vector.isnull().sum())
-		print('gc num null', gc.isnull().sum())
-
 		# remove loci that have NA or inf in loadings
 		loadings_vector.replace([np.inf, -np.inf], np.nan, inplace=True)
 		mask = loadings_vector.isnull()
-		print('mask shape', mask.shape, '\n', mask.head())
 		temp_loadings = loadings_vector.loc[~mask]
 		temp_gc = gc.loc[~mask]
 
@@ -129,10 +107,6 @@ def gc_correlation(gc, components):
 		mask = temp_gc.isnull()
 		temp_gc = temp_gc.loc[~mask]
 		temp_loadings = temp_loadings.loc[~mask]
-
-		print('temp_loadings shape', temp_loadings.shape)
-		print('temp_gc', temp_gc.shape)
-		print(temp_gc.head())
 
 		temp_loadings.to_csv('temp_loadings.tsv', sep='\t')
 		temp_gc.to_csv('temp_gc.tsv', sep='\t')
@@ -146,16 +120,11 @@ def gc_correlation(gc, components):
 def sort_PCs_by_gc_correlation(pca_data, components, gc_mat):
 	gc_mat = gc_mat.T
 	gc_mat['mean'] = gc_mat.mean(axis=1, skipna=True)
-	print('gc_profile', gc_mat['mean'].shape, '\n', gc_mat['mean'].head())
 
 	corrs = gc_correlation(gc_mat['mean'], components)
-	print('corrs\n', corrs)
 	abs_corrs = [abs(x) for x in corrs]
-	print('abs_corrs\n', abs_corrs)
 	flip_scores = [True if x<0 else False for x in corrs]
-	print('flip_scores\n', flip_scores)
 	res = sorted(range(len(abs_corrs)), key = lambda x: abs_corrs[x], reverse=True)
-	print('res\n', res)
 
 	# flip PCA values if correlation negative
 	for i, flip in enumerate(flip_scores):
@@ -174,30 +143,22 @@ def add_pca_features(library_cn_data, num_pcs=3, rt=None):
 	""" Takes in library_cn_data and adds pca features for each cell. """
 	mat = get_mat(library_cn_data, values='copy2_1')
 	gc_mat = get_mat(library_cn_data, values='gc')
-	print('gc_mat\n', gc_mat.shape, '\n', gc_mat.head())
 
 	# filter out null
 	num_null = mat.isnull().sum(axis=1)
 	mat = mat[num_null <= 800]
 	mat = mat.dropna(axis='columns')
-	print('after filtering mat', mat.shape)
 	gc_mat = gc_mat[mat.columns]
-	print('gc_mat\n', gc_mat.shape, '\n', gc_mat.head())
 
 	# run pca to get scores and loadings
 	transformed, components = run_pca(mat, 10)
-	print('transformed shape', transformed.shape)
-	print('components shape', components.shape)
 
 	# store components as df with genomic position as the index
 	components = pd.DataFrame(components.T, index=mat.columns)
-	print('components df\n', components.shape, '\n', components.head())
 
 	if rt is not None:
 		# any genomic loci dropped should also be removed from rt
-		print('rt before filtering', rt.shape)
 		rt = rt.loc[mat.columns, :]
-		print('rt after filtering', rt.shape)
 		# re-order PCs so that they are ranked by the replication timing correlation
 		pca_data = sort_PCs_by_rt_correlation(rt, components, transformed, num_pcs, mat)
 	# keep PCs in their original order
@@ -207,11 +168,7 @@ def add_pca_features(library_cn_data, num_pcs=3, rt=None):
 		pca_data = pca_data.iloc[:, :num_pcs]
 		pca_data = pca_data.reset_index().rename(columns={'index': 'cell_id'})
 
-	print('pca_data\n', pca_data.shape, '\n', pca_data.head())
-
 	library_cn_data = pd.merge(library_cn_data, pca_data, on='cell_id')
-
-	print('library_cn_data\n', library_cn_data.shape, '\n', library_cn_data.columns, '\n', library_cn_data.head())	
 
 	return library_cn_data
 

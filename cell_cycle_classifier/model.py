@@ -106,7 +106,7 @@ def train_test_model(
 
     training_data = feature_data.query('training_context == "training"')
     testing_data = feature_data.query('training_context == "holdout"')
-    test_cell_ids = testing_data['cell_id'].values
+    # test_cell_ids = testing_data['cell_id'].values
     testing_data['library_id'] = testing_data['cell_id'].apply(lambda x: x.split('-')[1])
     testing_data['sample_id'] = testing_data['cell_id'].apply(lambda x: x.split('-')[0])
     # sc_legend['cell_id'] = sc_legend['Sample'].apply(lambda x: x.split('.')[0])
@@ -114,6 +114,62 @@ def train_test_model(
     logging.info('training model')
     classifier = train_model(training_data, feature_names, random_state=random_seed)
 
+    sample_predictions(testing_data, classifier, figures_prefix, feature_names, use_rt_features)
+
+    y, y_pred, y_pred_proba = all_predictions(testing_data, classifier, figures_prefix, feature_names)
+
+    # TODO: return whole testing_data df instead of just test_cell_ids
+
+    stats = dict(
+        accuracy=metrics.accuracy_score(y, y_pred),
+        precision=metrics.precision_score(y, y_pred),
+        recall=metrics.recall_score(y, y_pred),
+        f1=metrics.f1_score(y, y_pred),
+        auc=metrics.roc_auc_score(y, y_pred_proba),
+        random_seed=random_seed,
+    )
+
+    return classifier, stats, y, y_pred, y_pred_proba, testing_data
+
+
+def all_predictions(testing_data, classifier, figures_prefix, feature_names):
+    """ Do classifier predictions for all available training data and return stats. """
+    X = testing_data[feature_names].values
+    y = testing_data['cell_cycle_state'].values == 'S'
+
+    logging.info(
+        'Accuracy of classifier on test set: {:.2f}'
+        .format(classifier.score(X, y)))
+
+    y_pred = classifier.predict(X)
+
+    logging.info("Accuracy: {}".format(metrics.accuracy_score(y, y_pred)))
+    logging.info("Precision: {}".format(metrics.precision_score(y, y_pred)))
+
+    y_pred_proba = classifier.predict_proba(X)[::,1]
+    fpr, tpr, _ = metrics.roc_curve(y, y_pred_proba)
+
+    if figures_prefix:
+        fig = plt.figure()
+        auc = metrics.roc_auc_score(y, y_pred_proba)
+        plt.plot(fpr,tpr,label="AUC={:.2f}, n={}".format(auc, y.shape[0]))
+        plt.plot([0, 1], [0, 1], color='navy', linestyle='--')
+        plt.legend(loc=4)
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        sns.despine(offset=True, trim=True)
+        fig.savefig(figures_prefix + 'roc.pdf', bbox_inches='tight')
+    
+        fig = plt.figure()
+        feature_importance = pd.Series(dict(zip(feature_names, classifier.feature_importances_)))
+        feature_importance.plot.bar()
+        fig.savefig(figures_prefix + 'features.pdf', bbox_inches='tight')
+
+    return y, y_pred, y_pred_proba
+
+
+def sample_predictions(testing_data, classifier, figures_prefix, feature_names, use_rt_features):
+    """ Do classifier predictions individually for each sample and plot the corresponding ROC and RT specificity plots. """
     for sample_id, chunk in testing_data.groupby('sample_id'):
         X = chunk[feature_names].values
         y = chunk['cell_cycle_state'].values == 'S'
@@ -140,31 +196,27 @@ def train_test_model(
             plt.ylabel('True Positive Rate')
             plt.title(sample_id)
             sns.despine(offset=True, trim=True)
-            fig.savefig(figures_prefix + sample_id + 'roc.pdf', bbox_inches='tight')
+            fig.savefig(figures_prefix + sample_id + '_roc.pdf', bbox_inches='tight')
         
             fig = plt.figure()
             feature_importance = pd.Series(dict(zip(feature_names, classifier.feature_importances_)))
             feature_importance.plot.bar()
-            fig.savefig(figures_prefix + 'features.pdf', bbox_inches='tight')
+            fig.savefig(figures_prefix + sample_id + '_features.pdf', bbox_inches='tight')
 
             if use_rt_features:
-                fig = plt.figure()
-                sns.scatterplot(x=chunk['r_G1b'].values, y=chunk['r_S4'].values, hue=y)
-                plt.title(sample_id)
-                plt.xlabel('G1b (early) correlation')
-                plt.ylabel('S4 (late) correlation')
-                plt.legend(title='S-phase status (flow)')
+                fig, ax = plt.subplots(1, 2, figsize=(14,7), tight_layout=True)
+                ax = ax.flatten()
+                # color points by flow sorted label
+                sns.scatterplot(x=chunk['r_G1b'].values, y=chunk['r_S4'].values, hue=y, ax=ax[0], alpha=0.5)
+                ax[0].set_title(sample_id)
+                ax[0].set_xlabel('G1b (early) correlation')
+                ax[0].set_ylabel('S4 (late) correlation')
+                ax[0].legend(title='S-phase status (flow)')
+                # color points by y_pred_proba
+                sns.scatterplot(x=chunk['r_G1b'].values, y=chunk['r_S4'].values, hue=y_pred_proba, ax=ax[1], alpha=0.5)
+                ax[1].set_title(sample_id)
+                ax[1].set_xlabel('G1b (early) correlation')
+                ax[1].set_ylabel('S4 (late) correlation')
+                ax[1].legend(title='S-phase prob (model)')
+
                 fig.savefig(figures_prefix + sample_id + '_rt_specificity.pdf', bbox_inches='tight')
-
-        stats = dict(
-            accuracy=metrics.accuracy_score(y, y_pred),
-            precision=metrics.precision_score(y, y_pred),
-            recall=metrics.recall_score(y, y_pred),
-            f1=metrics.f1_score(y, y_pred),
-            auc=metrics.roc_auc_score(y, y_pred_proba),
-            random_seed=random_seed,
-        )
-
-    return classifier, stats, y, y_pred, y_pred_proba, test_cell_ids
-
-

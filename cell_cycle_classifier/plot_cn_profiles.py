@@ -6,6 +6,7 @@ if os.environ.get('DISPLAY','') == '':
 	print('no display found. Using non-interactive Agg backend')
 	matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 import scgenome.cnplot
 
 
@@ -16,24 +17,46 @@ def plot_cn_pdf(df, output_path, max_cells=np.inf):
 	df.loc[:, 'r_S4'] = df['r_S4'].astype('float')
 	df.loc[:, 'r_G1b'] = df['r_G1b'].astype('float')
 	num_cells = min(len(df.cell_id.unique()), max_cells)
-	fig, ax = plt.subplots(num_cells, 1, figsize=(16, 4*num_cells))
-	i = 0
-	for cell_id, plot_data in df.groupby('cell_id'):
-		ax[i].set_title(str(cell_id) + '\nflow: ' + str(plot_data['cell_cycle_state'].values[0]) + \
-			', model s_prob: ' + str(round(plot_data['is_s_phase_prob'].values[0], 3)) + \
-			'\nG1b corr: ' + str(round(plot_data['r_G1b'].values[0], 3)) + \
-			', S4 corr: ' + str(round(plot_data['r_S4'].values[0], 3)))
-		_ = scgenome.cnplot.plot_cell_cn_profile(
-			ax[i],
-			plot_data,
-			'copy',
-			'state',
-		)
-		i += 1
-		if i >= max_cells:
-			break
+	
+	# fig, ax = plt.subplots(num_cells, 1, figsize=(16, 4*num_cells))
+	# i = 0
+	# for cell_id, plot_data in df.groupby('cell_id'):
+	# 	ax[i].set_title(str(cell_id) + '\nflow: ' + str(plot_data['cell_cycle_state'].values[0]) + \
+	# 		', model s_prob: ' + str(round(plot_data['is_s_phase_prob'].values[0], 3)) + \
+	# 		'\nG1b corr: ' + str(round(plot_data['r_G1b'].values[0], 3)) + \
+	# 		', S4 corr: ' + str(round(plot_data['r_S4'].values[0], 3)))
+	# 	_ = scgenome.cnplot.plot_cell_cn_profile(
+	# 		ax[i],
+	# 		plot_data,
+	# 		'copy',
+	# 		'state',
+	# 	)
+	# 	i += 1
+	# 	if i >= max_cells:
+	# 		break
 
-	fig.savefig(output_path, bbox_inches='tight')
+	i = 0
+	with PdfPages(output_path) as pdf:
+		for cell_id, plot_data in df.groupby('cell_id'):
+			fig, ax = plt.subplots(1, 1, figsize=(16, 4))
+			_ = scgenome.cnplot.plot_cell_cn_profile(
+				ax,
+				plot_data,
+				'copy',
+				'state',
+			)
+			ax.set_title(str(cell_id) + '\nflow: ' + str(plot_data['cell_cycle_state'].values[0]) + \
+				', model s_prob: ' + str(round(plot_data['is_s_phase_prob'].values[0], 3)) + \
+				'\nG1b corr: ' + str(round(plot_data['r_G1b'].values[0], 3)) + \
+				', S4 corr: ' + str(round(plot_data['r_S4'].values[0], 3)))
+			pdf.savefig(fig)
+			plt.close()
+			i += 1
+			if i >= max_cells:
+				break
+
+
+	# fig.savefig(output_path, bbox_inches='tight')
 
 
 def probable_flowS_FP(df):

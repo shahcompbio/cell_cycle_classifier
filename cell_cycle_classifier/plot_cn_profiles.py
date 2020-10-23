@@ -10,6 +10,7 @@ import scgenome.cnplot
 
 
 def plot_cn_pdf(df, output_path, max_cells=np.inf):
+	print("building", output_path)
 	df.loc[:, 'chr'] = df['chr'].astype('category')
 	df.loc[:, 'state'] = df['state'].astype('category')
 	df.loc[:, 'r_S4'] = df['r_S4'].astype('float')
@@ -18,9 +19,8 @@ def plot_cn_pdf(df, output_path, max_cells=np.inf):
 	fig, ax = plt.subplots(num_cells, 1, figsize=(16, 4*num_cells))
 	i = 0
 	for cell_id, plot_data in df.groupby('cell_id'):
-		print(i)
 		ax[i].set_title(str(cell_id) + '\nflow: ' + str(plot_data['cell_cycle_state'].values[0]) + \
-			'model s_prob: ' + str(round(plot_data['is_s_phase_prob'].values[0], 3)) + \
+			', model s_prob: ' + str(round(plot_data['is_s_phase_prob'].values[0], 3)) + \
 			'\nG1b corr: ' + str(round(plot_data['r_G1b'].values[0], 3)) + \
 			', S4 corr: ' + str(round(plot_data['r_S4'].values[0], 3)))
 		_ = scgenome.cnplot.plot_cell_cn_profile(
@@ -33,7 +33,7 @@ def plot_cn_pdf(df, output_path, max_cells=np.inf):
 		if i >= max_cells:
 			break
 
-	fig.savefig(output_path)
+	fig.savefig(output_path, bbox_inches='tight')
 
 
 def probable_flowS_FP(df):

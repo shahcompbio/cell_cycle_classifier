@@ -10,33 +10,33 @@ from matplotlib.backends.backend_pdf import PdfPages
 import scgenome.cnplot
 
 
-def plot_cn_pdf(df, output_path, max_cells=np.inf):
+def plot_cn_pdf(df, output_path, max_cells_per_sample=np.inf):
 	print("building", output_path)
 	df.loc[:, 'chr'] = df['chr'].astype('category')
 	df.loc[:, 'state'] = df['state'].astype('category')
 	df.loc[:, 'r_S4'] = df['r_S4'].astype('float')
 	df.loc[:, 'r_G1b'] = df['r_G1b'].astype('float')
-	num_cells = min(len(df.cell_id.unique()), max_cells)
 
-	i = 0
 	with PdfPages(output_path) as pdf:
-		for cell_id, plot_data in df.groupby('cell_id'):
-			fig, ax = plt.subplots(1, 1, figsize=(16, 6))
-			_ = scgenome.cnplot.plot_cell_cn_profile(
-				ax,
-				plot_data,
-				'copy',
-				'state',
-			)
-			ax.set_title(str(cell_id) + '\nflow: ' + str(plot_data['cell_cycle_state'].values[0]) + \
-				', model s_prob: ' + str(round(plot_data['is_s_phase_prob'].values[0], 3)) + \
-				'\nG1b corr: ' + str(round(plot_data['r_G1b'].values[0], 3)) + \
-				', S4 corr: ' + str(round(plot_data['r_S4'].values[0], 3)))
-			pdf.savefig(fig)
-			plt.close()
-			i += 1
-			if i >= max_cells:
-				break
+		for sample_id, sample_df in df.groupby('sample_id'):
+			i = 0
+			for cell_id, plot_data in df.groupby('cell_id'):
+				fig, ax = plt.subplots(1, 1, figsize=(16, 6))
+				_ = scgenome.cnplot.plot_cell_cn_profile(
+					ax,
+					plot_data,
+					'copy',
+					'state',
+				)
+				ax.set_title(str(cell_id) + '\nflow: ' + str(plot_data['cell_cycle_state'].values[0]) + \
+					', model s_prob: ' + str(round(plot_data['is_s_phase_prob'].values[0], 3)) + \
+					'\nG1b corr: ' + str(round(plot_data['r_G1b'].values[0], 3)) + \
+					', S4 corr: ' + str(round(plot_data['r_S4'].values[0], 3)))
+				pdf.savefig(fig)
+				plt.close()
+				i += 1
+				if i >= max_cells_per_sample:
+					break
 
 
 def probable_flowS_FP(df):
@@ -47,22 +47,22 @@ def probable_flowS_FP(df):
 def probable_flowS_FN(df):
 	df = df.query("cell_cycle_state != 'S' & is_s_phase == True")
 	print(df.shape)
-	plot_cn_pdf(df, 'probable_flowS_FN.pdf', max_cells=50)
+	plot_cn_pdf(df, 'probable_flowS_FN.pdf', max_cells_per_sample=25)
 
 
 def confident_s_phase(df):
 	df = df.query("cell_cycle_state == 'S' & r_G1b > 0.2 & r_S4 > 0.2")
-	plot_cn_pdf(df, 'confident_s_phase.pdf', max_cells=50)
+	plot_cn_pdf(df, 'confident_s_phase.pdf', max_cells_per_sample=25)
 
 
 def confident_G1_phase(df):
 	df = df.query("cell_cycle_state == 'G1' & r_G1b < 0. & r_S4 < 0.")
-	plot_cn_pdf(df, 'confident_G1_phase.pdf', max_cells=50)
+	plot_cn_pdf(df, 'confident_G1_phase.pdf', max_cells_per_sample=25)
 
 
 def confident_G2_phase(df):
 	df = df.query("cell_cycle_state == 'G2' & r_G1b < 0. & r_S4 < 0.")
-	plot_cn_pdf(df, 'confident_G2_phase.pdf', max_cells=50)
+	plot_cn_pdf(df, 'confident_G2_phase.pdf', max_cells_per_sample=25)
 
 
 if __name__ == '__main__':

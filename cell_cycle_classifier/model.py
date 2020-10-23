@@ -106,10 +106,8 @@ def train_test_model(
 
     training_data = feature_data.query('training_context == "training"')
     testing_data = feature_data.query('training_context == "holdout"')
-    # test_cell_ids = testing_data['cell_id'].values
     testing_data['library_id'] = testing_data['cell_id'].apply(lambda x: x.split('-')[1])
     testing_data['sample_id'] = testing_data['cell_id'].apply(lambda x: x.split('-')[0])
-    # sc_legend['cell_id'] = sc_legend['Sample'].apply(lambda x: x.split('.')[0])
 
     logging.info('training model')
     classifier = train_model(training_data, feature_names, random_state=random_seed)
@@ -117,8 +115,10 @@ def train_test_model(
     sample_predictions(testing_data, classifier, figures_prefix, feature_names, use_rt_features)
 
     y, y_pred, y_pred_proba = all_predictions(testing_data, classifier, figures_prefix, feature_names)
-
-    # TODO: return whole testing_data df instead of just test_cell_ids
+    logging.info("y.shape: {}".format(y.shape))
+    logging.info("testing_data.shape: {}".format(testing_data.shape))
+    testing_data['is_s_phase'] = y_pred
+    testing_data['is_s_phase_prob'] = y_pred_proba
 
     stats = dict(
         accuracy=metrics.accuracy_score(y, y_pred),

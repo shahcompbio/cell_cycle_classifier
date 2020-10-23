@@ -58,8 +58,6 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
 
     logging.info('training a classifier to test performance')
 
-    # TODO: train_test_model will return the entire testing_data df instead of cell_ids
-    # the cell_ids can be found within the testing_data
     classifier1, stats1, yg1, yp1, ypp1, testing_data1 = model.train_test_model(
         training_data,
         figures_prefix=figures_prefix,
@@ -79,14 +77,9 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
     cell_ids1 = testing_data1['cell_id'].values
     cell_ids2 = testing_data2['cell_id'].values
 
-    # save cn profiles for likely flow errors in testing data
+    # save cn profiles so we can query for probably flow errors
     testing_data1 = testing_data1.merge(cn_data, on=['cell_id', 'library_id', 'sample_id', 'cell_cycle_state'])
     testing_data1.to_csv('testing_data1.tsv', sep='\t')
-    flow_errs = testing_data1.query("cell_cycle_state == 'S' & r_G1b < 0 & r_S4 < 0")
-    print(flow_errs.columns)
-    print(flow_errs.shape)
-    print(flow_errs.head())
-    flow_errs.to_csv('probable_flow_errs.tsv', sep='\t')
 
     yg1 = yg1.astype(int)
     yg2 = yg2.astype(int)

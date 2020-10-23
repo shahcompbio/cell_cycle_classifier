@@ -63,9 +63,6 @@ def rt_correlation(rt, components):
 		temp_rt = temp_rt.loc[~mask]
 		temp_loadings = temp_loadings.loc[~mask]
 
-		temp_loadings.to_csv('temp_loadings.tsv', sep='\t')
-		temp_rt.to_csv('temp_rt.tsv', sep='\t')
-
 		r_ratio, pval_ratio = pearsonr(temp_loadings, temp_rt)
 		corrs.append(r_ratio)
 

@@ -38,7 +38,7 @@ def plot_cn_pdf(df, output_path, max_cells=np.inf):
 	i = 0
 	with PdfPages(output_path) as pdf:
 		for cell_id, plot_data in df.groupby('cell_id'):
-			fig, ax = plt.subplots(1, 1, figsize=(16, 4))
+			fig, ax = plt.subplots(1, 1, figsize=(16, 6))
 			_ = scgenome.cnplot.plot_cell_cn_profile(
 				ax,
 				plot_data,

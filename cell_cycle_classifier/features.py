@@ -54,11 +54,16 @@ align_metrics_columns = [
 
 def subset_by_cell_cycle(cn_data, proportion_s):
     cell_states = cn_data[['cell_id', 'cell_cycle_state']].drop_duplicates()
-    state_cell_ids = {}
+    state_cell_ids = {'G1': np.array([]), 'S': np.array([])}
+
     for cell_cycle_state, df in cell_states.groupby('cell_cycle_state'):
         state_cell_ids[cell_cycle_state] = shuffle(df['cell_id'].values.astype(str))
 
-    num_cells = len(state_cell_ids['S'])
+    logging.info('{} S phase cells'.format(len(state_cell_ids['S'])))
+    logging.info('{} G1 phase cells'.format(len(state_cell_ids['G1'])))
+
+    num_cells = min(len(state_cell_ids['S']), len(state_cell_ids['G1']))
+
     cell_ids = (
         list(state_cell_ids['S'][:int(proportion_s * num_cells)]) +
         list(state_cell_ids['G1'][:int((1. - proportion_s) * num_cells)])
@@ -354,7 +359,8 @@ def get_data(prefix, sas):
     logging.info('library sizes:\n{}'.format(metrics_data.groupby('library_id').size()))
 
     cn_data = cn_data.merge(metrics_data[['cell_id']].drop_duplicates())
-    cn_data = cn_data.merge(metrics_data[['cell_id', 'experimental_condition']])
+    cn_data = cn_data.merge(metrics_data[['cell_id', 'experimental_condition', 'log_likelihood', 'MBRSM_dispersion',
+                                        'MBRSI_dispersion_non_integerness', 'mean_state_mads', 'mad_hmmcopy']])
 
     # Remap experimental conditions and filter
     conditions = {
@@ -381,6 +387,45 @@ def get_data(prefix, sas):
 
     metrics_data = metrics_data.query('cell_cycle_state != "D"')
     cn_data = cn_data.query('cell_cycle_state != "D"')
+
+    logging.info("before any G1/G2 filtering log_likelihood")
+    logging.info(metrics_data.shape)
+    logging.info(cn_data.shape)
+
+    # Remove G1/G2 cells with log_likelihood < -7000
+    # metrics_data = metrics_data.drop(metrics_data.query('cell_cycle_state != "S" & log_likelihood < -7000').index)
+    # cn_data = cn_data.drop(cn_data.query('cell_cycle_state != "S" & log_likelihood < -7000').index)
+    # logging.info("after filtering log_likelihood")
+    # logging.info(metrics_data.shape)
+    # logging.info(cn_data.shape)
+
+    # Remove G1/G2 cells with MBRSM_dispersion > 0.5
+    metrics_data = metrics_data.drop(metrics_data.query('cell_cycle_state != "S" & MBRSM_dispersion > 0.5').index)
+    cn_data = cn_data.drop(cn_data.query('cell_cycle_state != "S" & MBRSM_dispersion > 0.5').index)
+    logging.info("after filtering MBRSM_dispersion")
+    logging.info(metrics_data.shape)
+    logging.info(cn_data.shape)
+
+    # Remove G1/G2 cells with MBRSI_dispersion_non_integerness > 0.5
+    metrics_data = metrics_data.drop(metrics_data.query('cell_cycle_state != "S" & MBRSI_dispersion_non_integerness > 0.5').index)
+    cn_data = cn_data.drop(cn_data.query('cell_cycle_state != "S" & MBRSI_dispersion_non_integerness > 0.5').index)
+    logging.info("after filtering MBRSI_dispersion_non_integerness")
+    logging.info(metrics_data.shape)
+    logging.info(cn_data.shape)
+
+    # # Remove G1/G2 cells with mean_state_mads > 0.15
+    # metrics_data = metrics_data.drop(metrics_data.query('cell_cycle_state != "S" & mean_state_mads > 0.15').index)
+    # cn_data = cn_data.drop(cn_data.query('cell_cycle_state != "S" & mean_state_mads > 0.15').index)
+    # logging.info("after filtering mean_state_mads")
+    # logging.info(metrics_data.shape)
+    # logging.info(cn_data.shape)
+
+    # # Remove G1/G2 cells with mad_hmmcopy > 0.20
+    # metrics_data = metrics_data.drop(metrics_data.query('cell_cycle_state != "S" & mad_hmmcopy > 0.20').index)
+    # cn_data = cn_data.drop(cn_data.query('cell_cycle_state != "S" & mad_hmmcopy > 0.20').index)
+    # logging.info("after filtering mad_hmmcopy")
+    # logging.info(metrics_data.shape)
+    # logging.info(cn_data.shape)
 
     return cn_data, metrics_data, align_metrics_data
 

@@ -21,9 +21,8 @@ def train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=Non
 
     logging.info(stats)
 
-    for data in (cn_data, metrics_data, align_metrics_data):
-        data['sample_id'] = data['cell_id'].apply(lambda a: a.split('-')[0])
-        data['library_id'] = data['cell_id'].apply(lambda a: a.split('-')[1])
+    cn_data = cn_data.merge(metrics_data[['cell_id', 'library_id']].drop_duplicates(), how='left')
+    assert not cn_data['library_id'].isnull().any()
 
     logging.info('calculating features')
 

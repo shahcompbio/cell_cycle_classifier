@@ -43,6 +43,8 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
         use_pca_features=False
     )
 
+    training_data.to_csv('data/training/feature_data_rt.csv', index=False)
+
     training_data2 = features.get_features(
         training_url_prefix,
         shared_access_signature=shared_access_signature,
@@ -50,59 +52,63 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
         proportion_s_train=0.3,
         proportion_s_test=0.3,
         random_seed=42,
-        use_rt_features=False,
-        use_pca_features=False
-    )
-
-    cn_data, metrics_data, align_metrics_data = features.get_data(training_url_prefix, shared_access_signature)
-
-    logging.info('training a classifier to test performance')
-
-    classifier1, stats1, yg1, yp1, ypp1, testing_data1 = model.train_test_model(
-        training_data,
-        figures_prefix=figures_prefix,
-        random_seed=42,
         use_rt_features=True,
-        use_pca_features=False
+        use_pca_features=True
     )
 
-    classifier2, stats2, yg2, yp2, ypp2, testing_data2 = model.train_test_model(
-        training_data2,
-        figures_prefix=figures2_prefix,
-        random_seed=42,
-        use_rt_features=False,
-        use_pca_features=False
-    )
+    training_data2.to_csv('data/training/feature_data_rt_pca.csv', index=False)
 
-    cell_ids1 = testing_data1['cell_id'].values
-    cell_ids2 = testing_data2['cell_id'].values
+    return
 
-    # save cn profiles so we can query for probably flow errors
-    testing_data1 = testing_data1.merge(cn_data, on=['cell_id', 'library_id', 'sample_id', 'cell_cycle_state'])
-    testing_data1.to_csv('testing_data1.tsv', sep='\t')
+    # cn_data, metrics_data, align_metrics_data = features.get_data(training_url_prefix, shared_access_signature)
 
-    yg1 = yg1.astype(int)
-    yg2 = yg2.astype(int)
-    yp1 = yp1.astype(int)
-    yp2 = yp2.astype(int)
+    # logging.info('training a classifier to test performance')
 
-    y_g_p1 = np.subtract(yg1, yp1)
-    y_g_p2 = np.subtract(yg2, yp2)
-    y_p1_p2 = np.subtract(yp1, yp2)
+    # classifier1, stats1, yg1, yp1, ypp1, testing_data1 = model.train_test_model(
+    #     training_data,
+    #     figures_prefix=figures_prefix,
+    #     random_seed=42,
+    #     use_rt_features=True,
+    #     use_pca_features=False
+    # )
 
-    save_y_arrays(yg1, yg2, yp1, yp2, ypp1, ypp2, cell_ids1, cell_ids2)
-    cell_heatmap(yg1, y_g_p1, y_g_p2, y_p1_p2, figures_prefix)
-    confusion_mats(yg1, yg2, yp1, yp2, figures_prefix)
-    all_misclassified = misclassified_cells(y_g_p1, y_g_p2, y_p1_p2, cell_ids1, figures_prefix)
+    # classifier2, stats2, yg2, yp2, ypp2, testing_data2 = model.train_test_model(
+    #     training_data2,
+    #     figures_prefix=figures2_prefix,
+    #     random_seed=42,
+    #     use_rt_features=False,
+    #     use_pca_features=False
+    # )
 
-    cn_data.set_index('cell_id', inplace=True)
-    cn_missed = cn_data.loc[list(all_misclassified), :]
-    cn_missed.to_csv('test_cn_missed.tsv', sep='\t')
+    # cell_ids1 = testing_data1['cell_id'].values
+    # cell_ids2 = testing_data2['cell_id'].values
 
-    logging.info(stats1)
-    logging.info(stats2)
+    # # save cn profiles so we can query for probably flow errors
+    # testing_data1 = testing_data1.merge(cn_data, on=['cell_id', 'library_id', 'sample_id', 'cell_cycle_state'])
+    # testing_data1.to_csv('testing_data1.tsv', sep='\t')
 
-    training_data.to_csv(features_filename, index=False)
+    # yg1 = yg1.astype(int)
+    # yg2 = yg2.astype(int)
+    # yp1 = yp1.astype(int)
+    # yp2 = yp2.astype(int)
+
+    # y_g_p1 = np.subtract(yg1, yp1)
+    # y_g_p2 = np.subtract(yg2, yp2)
+    # y_p1_p2 = np.subtract(yp1, yp2)
+
+    # save_y_arrays(yg1, yg2, yp1, yp2, ypp1, ypp2, cell_ids1, cell_ids2)
+    # cell_heatmap(yg1, y_g_p1, y_g_p2, y_p1_p2, figures_prefix)
+    # confusion_mats(yg1, yg2, yp1, yp2, figures_prefix)
+    # all_misclassified = misclassified_cells(y_g_p1, y_g_p2, y_p1_p2, cell_ids1, figures_prefix)
+
+    # cn_data.set_index('cell_id', inplace=True)
+    # cn_missed = cn_data.loc[list(all_misclassified), :]
+    # cn_missed.to_csv('test_cn_missed.tsv', sep='\t')
+
+    # logging.info(stats1)
+    # logging.info(stats2)
+
+    # training_data.to_csv(features_filename, index=False)
 
 
 def misclassified_cells(y_g_p1, y_g_p2, y_p1_p2, cell_ids, figures_prefix):

@@ -15,7 +15,8 @@ from sklearn.preprocessing import PolynomialFeatures
 import cell_cycle_classifier.features as features
 
 
-def train_model(feature_data, feature_names, random_state=None):
+def train_model(feature_data, feature_names, random_state=None,
+                use_rt_features=True, use_pca_features=True):
     """ Train s phase state classifier
     
     Args:
@@ -26,6 +27,15 @@ def train_model(feature_data, feature_names, random_state=None):
     Returns:
         model: Cell state classification model
     """
+
+    # remove rt or pca feature names if necessary
+    rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'num_unique_bk']
+    pca_features = ['PC1', 'PC2', 'PC3']
+    if use_rt_features is False and set(rt_features).issubset(set(feature_names)):
+        feature_names = [x for x in feature_names if x not in rt_features]
+    if use_pca_features is False and set(pca_features).issubset(set(feature_names)):
+        feature_names = [x for x in feature_names if x not in pca_features]
+
     X = feature_data[feature_names].values
     y = feature_data['cell_cycle_state'].values == 'S'
 

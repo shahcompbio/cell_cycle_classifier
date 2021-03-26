@@ -41,6 +41,8 @@ def train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=Non
         metrics_data,
         align_metrics_data,
         figures_prefix=figures_prefix,
+        use_rt_features=use_rt_features,
+        use_pca_features=use_pca_features
     )
 
     logging.info('predicting cell cycle')
@@ -48,6 +50,8 @@ def train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=Non
     predictions = model.predict(
         classifier,
         feature_data,
+        use_rt_features=use_rt_features,
+        use_pca_features=use_pca_features
     )
 
     predictions = predictions.merge(metrics_data[['cell_id']].drop_duplicates(), how='right')

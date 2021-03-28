@@ -1,0 +1,24 @@
+package:
+  name: cell_cycle_classifier
+  version: '0.0.1'
+source:
+  git_url: https://github.com/shahcompbio/cell_cycle_classifier.git
+  git_rev: v0.0.1
+build:
+  number: 1
+requirements:
+  build:
+    - python
+    - click
+  run:
+    - python
+    - matplotlib
+    - pandas=0.25.3
+    - seaborn
+    - scikit-learn
+    - click
+    - cycler
+    - joblib
+about:
+  home: http://shahlab.ca
+  summary: 'Cell cycle classifier for DLP+ data.'

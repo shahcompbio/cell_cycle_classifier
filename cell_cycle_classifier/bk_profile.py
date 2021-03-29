@@ -66,8 +66,15 @@ def get_unique_breakpoints(bk):
 
 
 def add_uniqe_bk(library_cn_data):
+	print('\nin add_unique_bk()...')
+	print('library_cn_data.shape', library_cn_data.shape)
 	bk = convert_cn_to_breakpoints(library_cn_data)
+	print('library_cn_data.shape', library_cn_data.shape)
+	print('bk.shape', bk.shape)
 	bk = get_unique_breakpoints(bk)
+	print('bk.shape', bk.shape)
 
 	library_cn_data = pd.merge(library_cn_data, bk, on='cell_id')
+	print('library_cn_data.shape', library_cn_data.shape)
+	print('leaving add_unique_bk()...\n')
 	return library_cn_data

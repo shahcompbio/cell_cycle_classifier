@@ -149,18 +149,21 @@ def rt_correlation(rt, filtered_mat):
 						'r_S3', 'pval_S3', 'r_S4', 'pval_S4'])
 	df.set_index('cell_id', inplace=True)
 	for cell_name, cell_data in filtered_mat.iteritems():
+		r_ratio, pval_ratio = pearsonr(cell_data, rt['rep_ratio'])
+		r_G1b, pval_G1b = pearsonr(cell_data, rt['rep_G1b'])
+		r_S4, pval_S4 = pearsonr(cell_data, rt['rep_S4'])
 		try:
 			r_argmax, pval_argmax = pearsonr(cell_data, rt['rep_argmax'])
 		except:
 			r_argmax, pval_argmax = "NA", "NA"
-		try:
-			r_ratio, pval_ratio = pearsonr(cell_data, rt['rep_ratio'])
-		except:
-			r_ratio, pval_ratio = "NA", "NA"
-		try:
-			r_G1b, pval_G1b = pearsonr(cell_data, rt['rep_G1b'])
-		except:
-			r_G1b, pval_G1b = "NA", "NA"
+		# try:
+		# 	r_ratio, pval_ratio = pearsonr(cell_data, rt['rep_ratio'])
+		# except:
+		# 	r_ratio, pval_ratio = "NA", "NA"
+		# try:
+		# 	r_G1b, pval_G1b = pearsonr(cell_data, rt['rep_G1b'])
+		# except:
+		# 	r_G1b, pval_G1b = "NA", "NA"
 		try:
 			r_S1, pval_S1 = pearsonr(cell_data, rt['rep_S1'])
 		except:
@@ -173,10 +176,10 @@ def rt_correlation(rt, filtered_mat):
 			r_S3, pval_S3 = pearsonr(cell_data, rt['rep_S3'])
 		except:
 			r_S3, pval_S3 = "NA", "NA"
-		try:
-			r_S4, pval_S4 = pearsonr(cell_data, rt['rep_S4'])
-		except:
-			r_S4, pval_S4 = "NA", "NA"
+		# try:
+		# 	r_S4, pval_S4 = pearsonr(cell_data, rt['rep_S4'])
+		# except:
+		# 	r_S4, pval_S4 = "NA", "NA"
 		temp = [r_argmax, pval_argmax, r_ratio, pval_ratio,
 				r_G1b, pval_G1b, r_S1, pval_S1, r_S2, pval_S2,
 				r_S3, pval_S3, r_S4, pval_S4]
@@ -187,9 +190,18 @@ def rt_correlation(rt, filtered_mat):
 
 def add_rt_features(library_cn_data):
 	""" Takes in library_cn_data and adds replication timing correlations for each cell. """
+	print('\nin add_rt_features()...')
+	print('library_cn_data.shape', library_cn_data.shape)
 	mat = get_norm_reads_mat(library_cn_data)
+	print('library_cn_data.shape', library_cn_data.shape)
+	print('mat.shape', mat.shape)
 	rt, filtered_mat = get_rt_annotation(mat)
+	print('rt.shape', rt.shape)
+	print('filtered_mat.shape', filtered_mat.shape)
 	df = rt_correlation(rt, filtered_mat)
+	print('df.shape', df.shape)
 	library_cn_data = pd.merge(library_cn_data, df, on='cell_id')
+	print('library_cn_data.shape', library_cn_data.shape)
+	print('leaving add_rt_features()\n')
 	return rt, library_cn_data, filtered_mat
 

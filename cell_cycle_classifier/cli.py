@@ -45,18 +45,18 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
 
     training_data.to_csv('cell_cycle_classifier/data/training/feature_data_rt.csv', index=False)
 
-    training_data2 = features.get_features(
-        training_url_prefix,
-        shared_access_signature=shared_access_signature,
-        figures_prefix=figures2_prefix,
-        # proportion_s_train=0.3,
-        # proportion_s_test=0.3,
-        random_seed=42,
-        use_rt_features=True,
-        use_pca_features=True
-    )
+    # training_data2 = features.get_features(
+    #     training_url_prefix,
+    #     shared_access_signature=shared_access_signature,
+    #     figures_prefix=figures2_prefix,
+    #     # proportion_s_train=0.3,
+    #     # proportion_s_test=0.3,
+    #     random_seed=42,
+    #     use_rt_features=True,
+    #     use_pca_features=True
+    # )
 
-    training_data2.to_csv('cell_cycle_classifier/data/training/feature_data_rt_pca.csv', index=False)
+    # training_data2.to_csv('cell_cycle_classifier/data/training/feature_data_rt_pca.csv', index=False)
 
     return
 
@@ -244,7 +244,7 @@ def train_classify(cn_filename, metrics_filename, align_metrics_filename, predic
     align_metrics_data = pd.read_csv(align_metrics_filename)
 
     predictions = api.train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=figures_prefix,
-                        use_rt_features=False, use_pca_features=False)
+                        use_rt_features=True, use_pca_features=False)
 
     predictions.to_csv(predictions_filename, index=False)
 

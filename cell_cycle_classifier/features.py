@@ -514,7 +514,7 @@ def get_features(
     )
 
     training_data = training_data.query('cell_cycle_state != "D"')
-    training_data = training_data.query('ploidy < 6')
+    # training_data = training_data.query('ploidy < 6')
 
     # Testing features
     # 
@@ -524,6 +524,8 @@ def get_features(
         metrics_data,
         align_metrics_data,
         agg_proportion_s=proportion_s_test,
+        use_rt_features=use_rt_features,
+        use_pca_features=use_pca_features
     )
 
     testing_data = testing_data.query('cell_cycle_state != "D"')

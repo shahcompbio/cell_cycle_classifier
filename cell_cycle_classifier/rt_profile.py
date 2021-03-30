@@ -82,23 +82,31 @@ def get_rt_annotation(mat):
 	G2 = pyBigWig.open('cell_cycle_classifier/data/replication_timing/wgEncodeUwRepliSeqMcf7G2PctSignalRep1.bigWig')
 
 	for key, row in mat.iterrows():
+		# print('key:', key)
 		[chr_num, start, stop] = key.split('_')
 		chr_name = 'chr' + str(chr_num)
 
 		try:
 			G1b_intensity = G1b.stats(chr_name, int(start), int(stop), exact=True)
 			G1b_intensity = G1b_intensity[0]
+			# print('G1b_intensity', G1b_intensity)
 			S1_intensity = S1.stats(chr_name, int(start), int(stop), exact=True)
 			S1_intensity = S1_intensity[0]
+			# print('S1_intensity', S1_intensity)
 			S2_intensity = S2.stats(chr_name, int(start), int(stop), exact=True)
 			S2_intensity = S2_intensity[0]
+			# print('S2_intensity', S2_intensity)
 			S3_intensity = S3.stats(chr_name, int(start), int(stop), exact=True)
 			S3_intensity = S3_intensity[0]
+			# print('S3_intensity', S3_intensity)
 			S4_intensity = S4.stats(chr_name, int(start), int(stop), exact=True)
 			S4_intensity = S4_intensity[0]
+			# print('S4_intensity', S4_intensity)
 			G2_intensity = G2.stats(chr_name, int(start), int(stop), exact=True)
 			G2_intensity = G2_intensity[0]
+			# print('G2_intensity', G2_intensity)
 		except:
+			print('failed to extract intensities from bigWig')
 			mat.loc[key, 'rep_argmax'] = np.nan
 			mat.loc[key, 'rep_ratio'] = np.nan
 			mat.loc[key, 'rep_G1b'] = np.nan
@@ -108,6 +116,7 @@ def get_rt_annotation(mat):
 			mat.loc[key, 'rep_S4'] = np.nan
 
 		if (G1b_intensity is None) or (S1_intensity is None) or (S2_intensity is None) or (S3_intensity is None) or (S4_intensity is None) or (G2_intensity is None):
+			print('one of the rt intensities was None')
 			mat.loc[key, 'rep_argmax'] = np.nan
 			mat.loc[key, 'rep_ratio'] = np.nan
 			mat.loc[key, 'rep_G1b'] = np.nan
@@ -129,31 +138,38 @@ def get_rt_annotation(mat):
 			mat.loc[key, 'rep_S2'] = S2_out
 			mat.loc[key, 'rep_S3'] = S3_out
 			mat.loc[key, 'rep_S4'] = S4_out
+			# print(mat.loc[key])
 
 	# drop all genomic bins that contain NA
-	mat.dropna(axis=0, inplace=True)
+	# mat.dropna(axis=0, inplace=True)
 
 	# only return replication timing annotations in rt
 	rt = mat[['rep_argmax', 'rep_ratio', 'rep_G1b', 'rep_S1', 'rep_S2', 'rep_S3', 'rep_S4']]
+	rt.dropna(inplace=True)
 
 	# remove replication timing annotations for filtered version of mat that gets returned
-	filtered_mat = mat.drop(columns=['rep_argmax', 'rep_ratio', 'rep_G1b', 'rep_S1', 'rep_S2', 'rep_S3', 'rep_S4'])
+	# filtered_mat = mat.drop(columns=['rep_argmax', 'rep_ratio', 'rep_G1b', 'rep_S1', 'rep_S2', 'rep_S3', 'rep_S4'])
 
-	return rt, filtered_mat
+	return rt
 
 
-def rt_correlation(rt, filtered_mat):
+def rt_correlation(rt, mat):
 	""" Find correlation between rt_profiles and norm_reads for each cell. """
 	df = pd.DataFrame(columns = ['cell_id', 'r_argmax', 'pval_argmax', 'r_ratio', 'pval_ratio',
 						'r_G1b', 'pval_G1b', 'r_S1', 'pval_S1', 'r_S2', 'pval_S2',
 						'r_S3', 'pval_S3', 'r_S4', 'pval_S4'])
 	df.set_index('cell_id', inplace=True)
-	for cell_name, cell_data in filtered_mat.iteritems():
-		r_ratio, pval_ratio = pearsonr(cell_data, rt['rep_ratio'])
-		r_G1b, pval_G1b = pearsonr(cell_data, rt['rep_G1b'])
-		r_S4, pval_S4 = pearsonr(cell_data, rt['rep_S4'])
+	for cell_name, cell_data in mat.iteritems():
+		# removing missing values for this cell
+		cell_data = cell_data.copy().dropna()
+		temp_rt = rt.loc[cell_data.index]
+
+		# find correlation between cell copy and rt features
+		r_ratio, pval_ratio = pearsonr(cell_data, temp_rt['rep_ratio'])
+		r_G1b, pval_G1b = pearsonr(cell_data, temp_rt['rep_G1b'])
+		r_S4, pval_S4 = pearsonr(cell_data, temp_rt['rep_S4'])
 		try:
-			r_argmax, pval_argmax = pearsonr(cell_data, rt['rep_argmax'])
+			r_argmax, pval_argmax = pearsonr(cell_data, temp_rt['rep_argmax'])
 		except:
 			r_argmax, pval_argmax = "NA", "NA"
 		# try:
@@ -165,15 +181,15 @@ def rt_correlation(rt, filtered_mat):
 		# except:
 		# 	r_G1b, pval_G1b = "NA", "NA"
 		try:
-			r_S1, pval_S1 = pearsonr(cell_data, rt['rep_S1'])
+			r_S1, pval_S1 = pearsonr(cell_data, temp_rt['rep_S1'])
 		except:
 			r_S1, pval_S1 = "NA", "NA"
 		try:
-			r_S2, pval_S2 = pearsonr(cell_data, rt['rep_S2'])
+			r_S2, pval_S2 = pearsonr(cell_data, temp_rt['rep_S2'])
 		except:
 			r_S2, pval_S2 = "NA", "NA"
 		try:
-			r_S3, pval_S3 = pearsonr(cell_data, rt['rep_S3'])
+			r_S3, pval_S3 = pearsonr(cell_data, temp_rt['rep_S3'])
 		except:
 			r_S3, pval_S3 = "NA", "NA"
 		# try:
@@ -195,13 +211,13 @@ def add_rt_features(library_cn_data):
 	mat = get_norm_reads_mat(library_cn_data)
 	print('library_cn_data.shape', library_cn_data.shape)
 	print('mat.shape', mat.shape)
-	rt, filtered_mat = get_rt_annotation(mat)
+	print(mat.head())
+	rt = get_rt_annotation(mat)
 	print('rt.shape', rt.shape)
-	print('filtered_mat.shape', filtered_mat.shape)
-	df = rt_correlation(rt, filtered_mat)
+	df = rt_correlation(rt, mat)
 	print('df.shape', df.shape)
 	library_cn_data = pd.merge(library_cn_data, df, on='cell_id')
 	print('library_cn_data.shape', library_cn_data.shape)
 	print('leaving add_rt_features()\n')
-	return rt, library_cn_data, filtered_mat
+	return rt, library_cn_data, mat
 

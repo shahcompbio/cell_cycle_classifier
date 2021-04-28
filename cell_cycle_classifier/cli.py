@@ -31,54 +31,91 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
     logging.info('obtaining training data')
 
     figures2_prefix = str(figures_prefix) + '2_'
+    figures3_prefix = str(figures_prefix) + '3_'
+    figures4_prefix = str(figures_prefix) + '4_'
 
     training_data = features.get_features(
         training_url_prefix,
         shared_access_signature=shared_access_signature,
         figures_prefix=figures_prefix,
-        # proportion_s_train=0.3,
-        # proportion_s_test=0.3,
+        proportion_s_train=0.3,
+        proportion_s_test=0.3,
         random_seed=42,
-        use_rt_features=True,
+        use_rt_features=False,
         use_pca_features=False
     )
 
-    training_data.to_csv('cell_cycle_classifier/data/training/feature_data_rt.csv', index=False)
+    training_data2 = features.get_features(
+        training_url_prefix,
+        shared_access_signature=shared_access_signature,
+        figures_prefix=figures2_prefix,
+        proportion_s_train=0.3,
+        proportion_s_test=0.3,
+        random_seed=42,
+        use_rt_features=True,
+        use_pca_features=True
+    )
 
-    # training_data2 = features.get_features(
-    #     training_url_prefix,
-    #     shared_access_signature=shared_access_signature,
-    #     figures_prefix=figures2_prefix,
-    #     # proportion_s_train=0.3,
-    #     # proportion_s_test=0.3,
-    #     random_seed=42,
-    #     use_rt_features=True,
-    #     use_pca_features=True
-    # )
+    training_data3 = features.get_features(
+        training_url_prefix,
+        shared_access_signature=shared_access_signature,
+        figures_prefix=figures3_prefix,
+        proportion_s_train=0.3,
+        proportion_s_test=0.3,
+        random_seed=42,
+        use_rt_features=False,
+        use_pca_features=False,
+        curated_labels='cell_cycle_classifier/data/training/curated_cell_cycle_state.csv'
+    )
 
-    # training_data2.to_csv('cell_cycle_classifier/data/training/feature_data_rt_pca.csv', index=False)
+    training_data4 = features.get_features(
+        training_url_prefix,
+        shared_access_signature=shared_access_signature,
+        figures_prefix=figures4_prefix,
+        proportion_s_train=0.3,
+        proportion_s_test=0.3,
+        random_seed=42,
+        use_rt_features=True,
+        use_pca_features=True,
+        curated_labels='cell_cycle_classifier/data/training/curated_cell_cycle_state.csv'
+    )
 
-    return
 
     # cn_data, metrics_data, align_metrics_data = features.get_data(training_url_prefix, shared_access_signature)
 
-    # logging.info('training a classifier to test performance')
+    logging.info('training a classifier to test performance')
 
-    # classifier1, stats1, yg1, yp1, ypp1, testing_data1 = model.train_test_model(
-    #     training_data,
-    #     figures_prefix=figures_prefix,
-    #     random_seed=42,
-    #     use_rt_features=True,
-    #     use_pca_features=False
-    # )
+    classifier1, stats1, yg1, yp1, ypp1, testing_data1 = model.train_test_model(
+        training_data,
+        figures_prefix=figures_prefix,
+        random_seed=42,
+        use_rt_features=False,
+        use_pca_features=False
+    )
 
-    # classifier2, stats2, yg2, yp2, ypp2, testing_data2 = model.train_test_model(
-    #     training_data2,
-    #     figures_prefix=figures2_prefix,
-    #     random_seed=42,
-    #     use_rt_features=False,
-    #     use_pca_features=False
-    # )
+    classifier2, stats2, yg2, yp2, ypp2, testing_data2 = model.train_test_model(
+        training_data2,
+        figures_prefix=figures2_prefix,
+        random_seed=42,
+        use_rt_features=True,
+        use_pca_features=True
+    )
+
+    classifier3, stats3, yg3, yp3, ypp3, testing_data3 = model.train_test_model(
+        training_data3,
+        figures_prefix=figures3_prefix,
+        random_seed=42,
+        use_rt_features=False,
+        use_pca_features=False
+    )
+
+    classifier4, stats4, yg4, yp4, ypp4, testing_data4 = model.train_test_model(
+        training_data4,
+        figures_prefix=figures4_prefix,
+        random_seed=42,
+        use_rt_features=True,
+        use_pca_features=True
+    )
 
     # cell_ids1 = testing_data1['cell_id'].values
     # cell_ids2 = testing_data2['cell_id'].values

@@ -88,9 +88,9 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         pandas.DataFrame: Feature data
     """
 
-    print('number of cells in cn_data 1', cn_data.cell_id.drop_duplicates().shape)
+    # print('number of cells in cn_data 1', cn_data.cell_id.drop_duplicates().shape)
     cn_data = cn_data.merge(align_metrics_data[['cell_id', 'median_insert_size']])
-    print('number of cells in cn_data 2', cn_data.cell_id.drop_duplicates().shape)
+    # print('number of cells in cn_data 2', cn_data.cell_id.drop_duplicates().shape)
 
     corr_data = []
 
@@ -224,17 +224,17 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
                 fig.savefig(figures_prefix + f'{library_id}_useinsert{use_insert_size}_gc_corrected.pdf')
 
         if use_rt_features:
-            print('use_rt_features is True')
-            print('library_cn_data.shape 1a', library_cn_data.shape)
+            # print('use_rt_features is True')
+            # print('library_cn_data.shape 1a', library_cn_data.shape)
             library_cn_data = add_uniqe_bk(library_cn_data)
             rt, library_cn_data, filtered_mat = add_rt_features(library_cn_data)
-            print('library_cn_data.shape 1b', library_cn_data.shape)
+            # print('library_cn_data.shape 1b', library_cn_data.shape)
 
         if use_pca_features and use_rt_features:
-            print('use_pca_features is True')
-            print('library_cn_data.shape 2a', library_cn_data.shape)
+            # print('use_pca_features is True')
+            # print('library_cn_data.shape 2a', library_cn_data.shape)
             library_cn_data = add_pca_features(library_cn_data, rt=rt)
-            print('library_cn_data.shape 2b', library_cn_data.shape)
+            # print('library_cn_data.shape 2b', library_cn_data.shape)
 
 
         if use_pca_features and not use_rt_features:
@@ -281,8 +281,8 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
 
         library_corr_data = pd.DataFrame(library_corr_data)
         library_corr_data['library_id'] = library_id
-        print('library_corr_data.shape', library_corr_data.shape)
-        print('number of cells in library_corr_data', library_corr_data.cell_id.drop_duplicates().shape)
+        # print('library_corr_data.shape', library_corr_data.shape)
+        # print('number of cells in library_corr_data', library_corr_data.cell_id.drop_duplicates().shape)
 
         corr_data.append(library_corr_data)
 
@@ -295,8 +295,8 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         plt.close('all')
 
     corr_data = pd.concat(corr_data, sort=True, ignore_index=True)
-    print('corr_data.shape 1', corr_data.shape)
-    print('number of cells in corr_data 1', corr_data.cell_id.drop_duplicates().shape)
+    # print('corr_data.shape 1', corr_data.shape)
+    # print('number of cells in corr_data 1', corr_data.cell_id.drop_duplicates().shape)
     # corr_data = corr_data.dropna()
     
     ploidy = cn_data.groupby('cell_id')['state'].mean().rename('ploidy').reset_index()
@@ -307,8 +307,8 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         corr_data = corr_data.merge(metrics_data[['cell_id', 'cell_cycle_state']].drop_duplicates())
     corr_data = corr_data.merge(ploidy)
 
-    print('corr_data.shape 2', corr_data.shape)
-    print('number of cells in corr_data 2', corr_data.cell_id.drop_duplicates().shape)
+    # print('corr_data.shape 2', corr_data.shape)
+    # print('number of cells in corr_data 2', corr_data.cell_id.drop_duplicates().shape)
     
     return corr_data
 
@@ -339,7 +339,7 @@ cache_dir = './cachedir'
 memory = joblib.Memory(cache_dir, verbose=10)
 
 @memory.cache
-def get_data(prefix, sas):
+def get_data(prefix, sas, curated_labels=False):
     cn_data = []
     for cn_data_url in cn_data_urls:
         url = prefix + cn_data_url + sas
@@ -404,6 +404,30 @@ def get_data(prefix, sas):
     metrics_data = metrics_data.query('cell_cycle_state != "D"')
     cn_data = cn_data.query('cell_cycle_state != "D"')
 
+    # have hand-curated labels replace the flow-determined cell cycle state
+    if curated_labels is not None:
+        curated_df = pd.read_csv(curated_labels)
+
+        # merge new_cell_cycle_state into metrics data
+        metrics_data = pd.merge(metrics_data, curated_df, how='left', on=['cell_id', 'cell_cycle_state'])
+
+        # copy flow-determined state for cells without new_cell_cycle_state
+        for key, row in metrics_data.iterrows():
+            if pd.isnull(row['new_cell_cycle_state']):
+                metrics_data.loc[key, 'new_cell_cycle_state'] = metrics_data.loc[key, 'cell_cycle_state']
+                metrics_data.loc[key, 'checked'] = False
+                metrics_data.loc[key, 'corrected'] = False
+
+        # merge assignments into cn_data
+        full_curated_df = metrics_data[['cell_id', 'new_cell_cycle_state', 'checked', 'corrected']]
+        cn_data = pd.merge(cn_data, full_curated_df, how='left', on='cell_id')
+
+        # assign new_cell_cycle_state to cell_cycle_state
+        cn_data.cell_cycle_state = cn_data.new_cell_cycle_state
+        metrics_data.cell_cycle_state = metrics_data.new_cell_cycle_state
+        cn_data.drop(columns=['new_cell_cycle_state'], inplace=True)
+        metrics_data.drop(columns=['new_cell_cycle_state'], inplace=True)
+
     # logging.info("before any G1/G2 filtering log_likelihood")
     # logging.info(metrics_data.shape)
     # logging.info(cn_data.shape)
@@ -455,7 +479,8 @@ def get_features(
         proportion_s_test=None,
         random_seed=None,
         use_rt_features=True,
-        use_pca_features=True
+        use_pca_features=True,
+        curated_labels=None
     ):
     """ Train and test the model given annotated input copy number data.
     
@@ -473,9 +498,9 @@ def get_features(
         [type]: [description]
     """
 
-    cn_data, metrics_data, align_metrics_data = get_data(training_url_prefix, shared_access_signature)
+    cn_data, metrics_data, align_metrics_data = get_data(training_url_prefix, shared_access_signature, curated_labels)
 
-    print('number of cells in cn_data 0', cn_data.cell_id.drop_duplicates().shape)
+    # print('number of cells in cn_data 0', cn_data.cell_id.drop_duplicates().shape)
 
     np.random.seed(random_seed)
 
@@ -514,7 +539,7 @@ def get_features(
     )
 
     training_data = training_data.query('cell_cycle_state != "D"')
-    # training_data = training_data.query('ploidy < 6')
+    training_data = training_data.query('ploidy < 6')
 
     # Testing features
     # 

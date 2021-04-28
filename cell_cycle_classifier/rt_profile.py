@@ -163,6 +163,7 @@ def rt_correlation(rt, mat):
 		# removing missing values for this cell
 		cell_data = cell_data.copy().dropna()
 		temp_rt = rt.loc[cell_data.index]
+		# print('temp_rt.shape', temp_rt.shape)
 
 		# find correlation between cell copy and rt features
 		r_ratio, pval_ratio = pearsonr(cell_data, temp_rt['rep_ratio'])
@@ -206,18 +207,18 @@ def rt_correlation(rt, mat):
 
 def add_rt_features(library_cn_data):
 	""" Takes in library_cn_data and adds replication timing correlations for each cell. """
-	print('\nin add_rt_features()...')
-	print('library_cn_data.shape', library_cn_data.shape)
+	# print('\nin add_rt_features()...')
+	# print('library_cn_data.shape', library_cn_data.shape)
 	mat = get_norm_reads_mat(library_cn_data)
-	print('library_cn_data.shape', library_cn_data.shape)
-	print('mat.shape', mat.shape)
-	print(mat.head())
+	# print('library_cn_data.shape', library_cn_data.shape)
+	# print('mat.shape', mat.shape)
+	# print(mat.head())
 	rt = get_rt_annotation(mat)
-	print('rt.shape', rt.shape)
+	# print('rt.shape', rt.shape)
 	df = rt_correlation(rt, mat)
-	print('df.shape', df.shape)
+	# print('df.shape', df.shape)
 	library_cn_data = pd.merge(library_cn_data, df, on='cell_id')
-	print('library_cn_data.shape', library_cn_data.shape)
-	print('leaving add_rt_features()\n')
+	# print('library_cn_data.shape', library_cn_data.shape)
+	# print('leaving add_rt_features()\n')
 	return rt, library_cn_data, mat
 

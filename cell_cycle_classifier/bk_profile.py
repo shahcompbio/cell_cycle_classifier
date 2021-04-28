@@ -10,8 +10,8 @@ def generate_bin_edge_ids(chrom, chrom_cns):
 
 
 def convert_cn_to_breakpoints(cn_data):
-	print('in convert_cn_to_breakpoints...')
-	print('original number of cells', cn_data.cell_id.drop_duplicates().shape)
+	# print('in convert_cn_to_breakpoints...')
+	# print('original number of cells', cn_data.cell_id.drop_duplicates().shape)
 	cn = cn_data[['chr', 'start', 'end', 'width', 'cell_id', 'state']]
 
 	cn.sort_values(by=['cell_id', 'chr', 'start', 'end'], inplace=True)
@@ -75,16 +75,16 @@ def get_unique_breakpoints(bk):
 
 
 def add_uniqe_bk(library_cn_data):
-	print('\nin add_unique_bk()...')
-	print('library_cn_data.shape', library_cn_data.shape)
+	# print('\nin add_unique_bk()...')
+	# print('library_cn_data.shape', library_cn_data.shape)
 	bk = convert_cn_to_breakpoints(library_cn_data)
-	print('library_cn_data.shape', library_cn_data.shape)
-	print('bk.shape', bk.shape)
+	# print('library_cn_data.shape', library_cn_data.shape)
+	# print('bk.shape', bk.shape)
 	bk = get_unique_breakpoints(bk)
-	print('bk.shape', bk.shape)
-	print(bk.head())
+	# print('bk.shape', bk.shape)
+	# print(bk.head())
 
 	library_cn_data = pd.merge(library_cn_data, bk, on='cell_id')
-	print('library_cn_data.shape', library_cn_data.shape)
-	print('leaving add_unique_bk()...\n')
+	# print('library_cn_data.shape', library_cn_data.shape)
+	# print('leaving add_unique_bk()...\n')
 	return library_cn_data

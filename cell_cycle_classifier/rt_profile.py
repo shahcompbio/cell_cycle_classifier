@@ -153,11 +153,11 @@ def get_rt_annotation(mat):
 	return rt
 
 
-def rt_correlation(rt, mat):
-	""" Find correlation between rt_profiles and norm_reads for each cell. """
-	df = pd.DataFrame(columns = ['cell_id', 'r_argmax', 'pval_argmax', 'r_ratio', 'pval_ratio',
-						'r_G1b', 'pval_G1b', 'r_S1', 'pval_S1', 'r_S2', 'pval_S2',
-						'r_S3', 'pval_S3', 'r_S4', 'pval_S4'])
+def calc_rt_features(rt, mat):
+	""" Find correlation and slope between rt_profiles and norm_reads for each cell. """
+	df = pd.DataFrame(columns = ['cell_id', 'r_ratio', 'pval_ratio',
+						'r_G1b', 'pval_G1b', 'r_S4', 'pval_S4',
+						'slope_ratio', 'slope_G1b', 'slope_S4'])
 	df.set_index('cell_id', inplace=True)
 	for cell_name, cell_data in mat.iteritems():
 		# removing missing values for this cell
@@ -169,37 +169,18 @@ def rt_correlation(rt, mat):
 		r_ratio, pval_ratio = pearsonr(cell_data, temp_rt['rep_ratio'])
 		r_G1b, pval_G1b = pearsonr(cell_data, temp_rt['rep_G1b'])
 		r_S4, pval_S4 = pearsonr(cell_data, temp_rt['rep_S4'])
-		try:
-			r_argmax, pval_argmax = pearsonr(cell_data, temp_rt['rep_argmax'])
-		except:
-			r_argmax, pval_argmax = "NA", "NA"
-		# try:
-		# 	r_ratio, pval_ratio = pearsonr(cell_data, rt['rep_ratio'])
-		# except:
-		# 	r_ratio, pval_ratio = "NA", "NA"
-		# try:
-		# 	r_G1b, pval_G1b = pearsonr(cell_data, rt['rep_G1b'])
-		# except:
-		# 	r_G1b, pval_G1b = "NA", "NA"
-		try:
-			r_S1, pval_S1 = pearsonr(cell_data, temp_rt['rep_S1'])
-		except:
-			r_S1, pval_S1 = "NA", "NA"
-		try:
-			r_S2, pval_S2 = pearsonr(cell_data, temp_rt['rep_S2'])
-		except:
-			r_S2, pval_S2 = "NA", "NA"
-		try:
-			r_S3, pval_S3 = pearsonr(cell_data, temp_rt['rep_S3'])
-		except:
-			r_S3, pval_S3 = "NA", "NA"
-		# try:
-		# 	r_S4, pval_S4 = pearsonr(cell_data, rt['rep_S4'])
-		# except:
-		# 	r_S4, pval_S4 = "NA", "NA"
-		temp = [r_argmax, pval_argmax, r_ratio, pval_ratio,
-				r_G1b, pval_G1b, r_S1, pval_S1, r_S2, pval_S2,
-				r_S3, pval_S3, r_S4, pval_S4]
+
+		# find slope between cell copy and rt features
+		print(type(temp_rt['rep_ratio'].values))
+		print(temp_rt['rep_ratio'].values[:10])
+		print(type(cell_data.values))
+		print(cell_data.values[:10])
+		slope_ratio = np.polyfit(cell_data.astype('float').values, temp_rt['rep_ratio'].astype('float').values, 1)[1]
+		slope_G1b = np.polyfit(cell_data.astype('float').values, temp_rt['rep_G1b'].astype('float').values, 1)[1]
+		slope_S4 = np.polyfit(cell_data.astype('float').values, temp_rt['rep_S4'].astype('float').values, 1)[1]
+	
+		temp = [r_ratio, pval_ratio, r_G1b, pval_G1b,
+				r_S4, pval_S4, slope_ratio, slope_G1b, slope_S4]
 		df.loc[cell_name] = temp
 
 	return df
@@ -215,7 +196,7 @@ def add_rt_features(library_cn_data):
 	# print(mat.head())
 	rt = get_rt_annotation(mat)
 	# print('rt.shape', rt.shape)
-	df = rt_correlation(rt, mat)
+	df = calc_rt_features(rt, mat)
 	# print('df.shape', df.shape)
 	library_cn_data = pd.merge(library_cn_data, df, on='cell_id')
 	# print('library_cn_data.shape', library_cn_data.shape)

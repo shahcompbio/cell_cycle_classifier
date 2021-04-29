@@ -33,6 +33,9 @@ all_feature_names = [
     'r_ratio',
     'r_G1b',
     'r_S4',
+    'slope_ratio',
+    'slope_G1b',
+    'slope_S4',
     'num_unique_bk',
     'PC1',
     'PC2',
@@ -272,6 +275,9 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
                 temp_dict['r_ratio'] = cell_data['r_ratio'].values[0]
                 temp_dict['r_G1b'] = cell_data['r_G1b'].values[0]  # all values should be same for the cell
                 temp_dict['r_S4'] = cell_data['r_S4'].values[0]  # all values should be same for the cell
+                temp_dict['slope_ratio'] = cell_data['slope_ratio'].values[0]
+                temp_dict['slope_G1b'] = cell_data['slope_G1b'].values[0]
+                temp_dict['slope_S4'] = cell_data['slope_S4'].values[0]
                 temp_dict['num_unique_bk'] = cell_data['num_unique_bk'].values[0]
             if use_pca_features:
                 temp_dict['PC1'] = cell_data['PC1'].values[0]
@@ -515,7 +521,8 @@ def get_features(
         feature_names = all_feature_names
 
     # remove rt or pca feature names if necessary
-    rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'num_unique_bk']
+    rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'slope_ratio',
+                'slope_G1b', 'slope_S4', 'num_unique_bk']
     pca_features = ['PC1', 'PC2', 'PC3']
     if use_rt_features is False and set(rt_features).issubset(set(feature_names)):
         feature_names = [x for x in feature_names if x not in rt_features]

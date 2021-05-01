@@ -37,6 +37,7 @@ all_feature_names = [
     'slope_G1b',
     'slope_S4',
     'num_unique_bk',
+    'norm_bk',
     'PC1',
     'PC2',
     'PC3'
@@ -313,6 +314,13 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         corr_data = corr_data.merge(metrics_data[['cell_id', 'cell_cycle_state']].drop_duplicates())
     corr_data = corr_data.merge(ploidy)
 
+    # normalize the breakpoint count per library
+    if use_rt_features:
+        corr_data['norm_bk'] = None
+        for library_id, library_cn_data in corr_data.groupby('library_id'):
+            mean_bk = library_cn_data.breakpoints.mean()
+            corr_data.loc[library_cn_data.index, 'norm_bk'] = library_cn_data.breakpoints / mean_bk
+
     # print('corr_data.shape 2', corr_data.shape)
     # print('number of cells in corr_data 2', corr_data.cell_id.drop_duplicates().shape)
     
@@ -522,7 +530,7 @@ def get_features(
 
     # remove rt or pca feature names if necessary
     rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'slope_ratio',
-                'slope_G1b', 'slope_S4', 'num_unique_bk']
+                'slope_G1b', 'slope_S4', 'num_unique_bk', 'norm_bk']
     pca_features = ['PC1', 'PC2', 'PC3']
     if use_rt_features is False and set(rt_features).issubset(set(feature_names)):
         feature_names = [x for x in feature_names if x not in rt_features]

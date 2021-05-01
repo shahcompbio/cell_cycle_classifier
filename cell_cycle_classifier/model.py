@@ -30,7 +30,7 @@ def train_model(feature_data, feature_names, random_state=None,
 
     # remove rt or pca feature names if necessary
     rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'slope_ratio',
-                'slope_G1b', 'slope_S4', 'num_unique_bk']
+                'slope_G1b', 'slope_S4', 'num_unique_bk', 'norm_bk']
     pca_features = ['PC1', 'PC2', 'PC3']
     if use_rt_features is False and set(rt_features).issubset(set(feature_names)):
         feature_names = [x for x in feature_names if x not in rt_features]
@@ -73,7 +73,7 @@ def predict(classifier, feature_data, feature_names=None,
     print('use_rt_features', use_rt_features)
 
     rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'slope_ratio',
-                'slope_G1b', 'slope_S4', 'num_unique_bk']
+                'slope_G1b', 'slope_S4', 'num_unique_bk', 'norm_bk']
     pca_features = ['PC1', 'PC2', 'PC3']
     if use_rt_features is False and set(rt_features).issubset(set(feature_names)):
         print('removing rt features')
@@ -125,7 +125,7 @@ def train_test_model(
 
     # remove rt or pca feature names if necessary
     rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'slope_ratio',
-                'slope_G1b', 'slope_S4', 'num_unique_bk']
+                'slope_G1b', 'slope_S4', 'num_unique_bk', 'norm_bk']
     pca_features = ['PC1', 'PC2', 'PC3']
     if use_rt_features is False and set(rt_features).issubset(set(feature_names)):
         feature_names = [x for x in feature_names if x not in rt_features]

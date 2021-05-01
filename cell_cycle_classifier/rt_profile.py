@@ -171,10 +171,6 @@ def calc_rt_features(rt, mat):
 		r_S4, pval_S4 = pearsonr(cell_data, temp_rt['rep_S4'])
 
 		# find slope between cell copy and rt features
-		print(type(temp_rt['rep_ratio'].values))
-		print(temp_rt['rep_ratio'].values[:10])
-		print(type(cell_data.values))
-		print(cell_data.values[:10])
 		slope_ratio = np.polyfit(cell_data.astype('float').values, temp_rt['rep_ratio'].astype('float').values, 1)[1]
 		slope_G1b = np.polyfit(cell_data.astype('float').values, temp_rt['rep_G1b'].astype('float').values, 1)[1]
 		slope_S4 = np.polyfit(cell_data.astype('float').values, temp_rt['rep_S4'].astype('float').values, 1)[1]

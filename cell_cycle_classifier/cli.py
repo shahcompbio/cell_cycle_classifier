@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
+from sklearn import metrics
 
 import cell_cycle_classifier.model as model
 import cell_cycle_classifier.features as features
@@ -116,6 +117,29 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
         use_rt_features=True,
         use_pca_features=True
     )
+
+    # plot ROC curves for all conditions on one plot
+    fpr1, tpr1, _ = metrics.roc_curve(yg1, ypp1)
+    fpr2, tpr2, _ = metrics.roc_curve(yg2, ypp2)
+    fpr3, tpr3, _ = metrics.roc_curve(yg3, ypp3)
+    fpr4, tpr4, _ = metrics.roc_curve(yg4, ypp4)
+
+    if figures_prefix:
+        fig = plt.figure()
+        plt.plot(fpr1, tpr1, color='g',
+            label="old features, old data,\nAUC={:.2f}, n={}".format(stats1['auc'], yg1.shape[0]))
+        plt.plot(fpr2, tpr2, color='r',
+            label="new features, old data,\nAUC={:.2f}, n={}".format(stats2['auc'], yg2.shape[0]))
+        plt.plot(fpr3, tpr3, color='k',
+            label="old features, new data,\nAUC={:.2f}, n={}".format(stats3['auc'], yg3.shape[0]))
+        plt.plot(fpr4, tpr4, color='b',
+            label="new features, new data,\nAUC={:.2f}, n={}".format(stats4['auc'], yg4.shape[0]))
+        plt.plot([0, 1], [0, 1], color='navy', linestyle='--')
+        plt.legend(loc=4)
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        sns.despine(offset=True, trim=True)
+        fig.savefig(figures_prefix + 'combined_roc.pdf', bbox_inches='tight')
 
     # cell_ids1 = testing_data1['cell_id'].values
     # cell_ids2 = testing_data2['cell_id'].values

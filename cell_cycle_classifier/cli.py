@@ -118,6 +118,11 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
         use_pca_features=True
     )
 
+    testing_data1.to_csv('testing_data1.tsv', sep='\t')
+    testing_data2.to_csv('testing_data2.tsv', sep='\t')
+    testing_data3.to_csv('testing_data3.tsv', sep='\t')
+    testing_data4.to_csv('testing_data4.tsv', sep='\t')
+
     # plot ROC curves for all conditions on one plot
     fpr1, tpr1, _ = metrics.roc_curve(yg1, ypp1)
     fpr2, tpr2, _ = metrics.roc_curve(yg2, ypp2)
@@ -140,6 +145,73 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
         plt.ylabel('True Positive Rate')
         sns.despine(offset=True, trim=True)
         fig.savefig(figures_prefix + 'combined_roc.pdf', bbox_inches='tight')
+
+
+    # plot ROC curves for all conditions, split by sample_id
+    for sample_id in testing_data1.sample_id.unique():
+        chunk1 = testing_data1.query('sample_id == "{}"'.format(sample_id))
+        chunk2 = testing_data2.query('sample_id == "{}"'.format(sample_id))
+        chunk3 = testing_data3.query('sample_id == "{}"'.format(sample_id))
+        chunk4 = testing_data4.query('sample_id == "{}"'.format(sample_id))
+
+        # get old and new feature names used in classifier
+        new_feature_names = features.all_feature_names
+        old_feature_names = new_feature_names
+        rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'slope_ratio',
+                    'slope_G1b', 'slope_S4', 'num_unique_bk', 'norm_bk']
+        pca_features = ['PC1', 'PC2', 'PC3']
+        if set(rt_features).issubset(set(old_feature_names)):
+            old_feature_names = [x for x in old_feature_names if x not in rt_features]
+        if set(pca_features).issubset(set(old_feature_names)):
+            old_feature_names = [x for x in old_feature_names if x not in pca_features]
+
+        # get X and y arrays
+        X1 = chunk1[old_feature_names].values
+        X2 = chunk2[new_feature_names].values
+        X3 = chunk3[old_feature_names].values
+        X4 = chunk4[new_feature_names].values
+        y1 = chunk1['cell_cycle_state'].values == 'S'
+        y2 = chunk2['cell_cycle_state'].values == 'S'
+        y3 = chunk3['cell_cycle_state'].values == 'S'
+        y4 = chunk4['cell_cycle_state'].values == 'S'
+
+        # calculate y predicted probabilities
+        y_pred_proba1 = classifier1.predict_proba(X1)[::,1]
+        y_pred_proba2 = classifier2.predict_proba(X2)[::,1]
+        y_pred_proba3 = classifier3.predict_proba(X3)[::,1]
+        y_pred_proba4 = classifier4.predict_proba(X4)[::,1]
+
+        # calculate FPRs and TPRs
+        fpr1, tpr1, _ = metrics.roc_curve(y1, y_pred_proba1)
+        fpr2, tpr2, _ = metrics.roc_curve(y2, y_pred_proba2)
+        fpr3, tpr3, _ = metrics.roc_curve(y3, y_pred_proba3)
+        fpr4, tpr4, _ = metrics.roc_curve(y4, y_pred_proba4)
+
+        # calculate AUC scores
+        auc1 = metrics.roc_auc_score(y1, y_pred_proba1)
+        auc2 = metrics.roc_auc_score(y2, y_pred_proba2)
+        auc3 = metrics.roc_auc_score(y3, y_pred_proba3)
+        auc4 = metrics.roc_auc_score(y4, y_pred_proba4)
+
+        # plot the fprs and tprs into an ROC plot for this sample_id
+        if figures_prefix:
+            fig = plt.figure()
+            plt.plot(fpr1, tpr1, color='g',
+                label="old features, old data,\nAUC={:.2f}, n={}".format(auc1, y1.shape[0]))
+            plt.plot(fpr2, tpr2, color='r',
+                label="new features, old data,\nAUC={:.2f}, n={}".format(auc2, y2.shape[0]))
+            plt.plot(fpr3, tpr3, color='k',
+                label="old features, new data,\nAUC={:.2f}, n={}".format(auc3, y3.shape[0]))
+            plt.plot(fpr4, tpr4, color='b',
+                label="new features, new data,\nAUC={:.2f}, n={}".format(auc4, y4.shape[0]))
+            plt.plot([0, 1], [0, 1], color='navy', linestyle='--')
+            plt.legend(loc=4)
+            plt.xlabel('False Positive Rate')
+            plt.ylabel('True Positive Rate')
+            plt.title(sample_id)
+            sns.despine(offset=True, trim=True)
+            fig.savefig(figures_prefix + sample_id + '_combined_roc.pdf', bbox_inches='tight')
+
 
     # cell_ids1 = testing_data1['cell_id'].values
     # cell_ids2 = testing_data2['cell_id'].values

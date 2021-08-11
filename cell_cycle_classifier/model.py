@@ -133,6 +133,7 @@ def train_test_model(
         feature_names = [x for x in feature_names if x not in pca_features]
 
     print('feature_names', feature_names)
+    print('feature_data.columns', feature_data.columns)
 
     training_data = feature_data.query('training_context == "training"')
     testing_data = feature_data.query('training_context == "holdout"')

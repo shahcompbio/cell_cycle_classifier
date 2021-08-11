@@ -13,7 +13,7 @@ def train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=Non
 
     if use_rt_features and not use_pca_features:
         if use_curated_labels:
-            training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/curated_feature_data_v2.csv')
+            training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/curated_feature_data_rt_v2.csv')
         else:
             training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/feature_data_rt_v2.csv')
     elif use_rt_features and use_pca_features:
@@ -26,6 +26,8 @@ def train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=Non
             training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/curated_feature_data_v2.csv')
         else:
             training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/feature_data.csv.gz')
+
+    print(training_data_filename)
 
     training_data = pd.read_csv(training_data_filename)
 

@@ -389,7 +389,7 @@ def train_classify(cn_filename, metrics_filename, align_metrics_filename, predic
     align_metrics_data = pd.read_csv(align_metrics_filename)
 
     predictions = api.train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=figures_prefix,
-                        use_rt_features=True, use_pca_features=False)
+                        use_rt_features=True, use_pca_features=False, use_curated_labels=True)
 
     predictions.to_csv(predictions_filename, index=False)
 

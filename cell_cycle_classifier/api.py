@@ -7,16 +7,25 @@ import cell_cycle_classifier.features as features
 
 
 def train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=None,
-                   use_rt_features=True, use_pca_features=True):
+                   use_rt_features=True, use_pca_features=False, use_curated_labels=True):
     logging.info('training a classifier')
 
 
     if use_rt_features and not use_pca_features:
-        training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/feature_data_rt.csv')
+        if use_curated_labels:
+            training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/curated_feature_data_v2.csv')
+        else:
+            training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/feature_data_rt_v2.csv')
     elif use_rt_features and use_pca_features:
-        training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/feature_data_rt_pca.csv')
+        if use_curated_labels:
+            training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/curated_feature_data_rt_pca.csv')
+        else:
+            training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/feature_data_rt_pca.csv')
     else:
-        training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/feature_data.csv.gz')
+        if use_curated_labels:
+            training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/curated_feature_data_v2.csv')
+        else:
+            training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/feature_data.csv.gz')
 
     training_data = pd.read_csv(training_data_filename)
 

@@ -166,6 +166,12 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
         rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'slope_ratio',
                     'slope_G1b', 'slope_S4', 'num_unique_bk', 'norm_bk']
         pca_features = ['PC1', 'PC2', 'PC3']
+        
+        # drop pca features from new_feature_names
+        if set(pca_features).issubset(set(new_feature_names)):
+            new_feature_names = [x for x in new_feature_names if x not in pca_features]
+
+        # drop pca and rt features from old_feature_names
         if set(rt_features).issubset(set(old_feature_names)):
             old_feature_names = [x for x in old_feature_names if x not in rt_features]
         if set(pca_features).issubset(set(old_feature_names)):

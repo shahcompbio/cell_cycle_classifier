@@ -54,8 +54,10 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
         proportion_s_test=0.3,
         random_seed=42,
         use_rt_features=True,
-        use_pca_features=True
+        use_pca_features=False
     )
+
+    training_data2.to_csv('cell_cycle_classifier/data/training/feature_data_rt_v2.csv', index=False)
 
     training_data3 = features.get_features(
         training_url_prefix,
@@ -69,6 +71,8 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
         curated_labels='cell_cycle_classifier/data/training/curated_cell_cycle_state.csv'
     )
 
+    training_data3.to_csv('cell_cycle_classifier/data/training/curated_feature_data_v2.csv', index=False)
+
     training_data4 = features.get_features(
         training_url_prefix,
         shared_access_signature=shared_access_signature,
@@ -77,9 +81,11 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
         proportion_s_test=0.3,
         random_seed=42,
         use_rt_features=True,
-        use_pca_features=True,
+        use_pca_features=False,
         curated_labels='cell_cycle_classifier/data/training/curated_cell_cycle_state.csv'
     )
+
+    training_data4.to_csv('cell_cycle_classifier/data/training/curated_feature_data_rt_v2.csv', index=False)
 
 
     # cn_data, metrics_data, align_metrics_data = features.get_data(training_url_prefix, shared_access_signature)
@@ -99,7 +105,7 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
         figures_prefix=figures2_prefix,
         random_seed=42,
         use_rt_features=True,
-        use_pca_features=True
+        use_pca_features=False
     )
 
     classifier3, stats3, yg3, yp3, ypp3, testing_data3 = model.train_test_model(
@@ -115,7 +121,7 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
         figures_prefix=figures4_prefix,
         random_seed=42,
         use_rt_features=True,
-        use_pca_features=True
+        use_pca_features=False
     )
 
     testing_data1.to_csv('testing_data1.tsv', sep='\t')

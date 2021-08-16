@@ -12,7 +12,7 @@ def generate_bin_edge_ids(chrom, chrom_cns):
 def convert_cn_to_breakpoints(cn_data):
 	# print('in convert_cn_to_breakpoints...')
 	# print('original number of cells', cn_data.cell_id.drop_duplicates().shape)
-	cn = cn_data[['chr', 'start', 'end', 'width', 'cell_id', 'state']]
+	cn = cn_data[['chr', 'start', 'end', 'cell_id', 'state']]
 
 	cn.sort_values(by=['cell_id', 'chr', 'start', 'end'], inplace=True)
 
@@ -26,7 +26,7 @@ def convert_cn_to_breakpoints(cn_data):
 				group['start'].iloc[1:].values - group['end'].iloc[:-1].values
 			)
 
-			group.set_index(['cell_id', 'chr', 'start', 'end', 'width'], inplace=True)
+			group.set_index(['cell_id', 'chr', 'start', 'end'], inplace=True)
 
 			chrom_brkpt = (group.diff().iloc[1:] != 0).astype(int)
 			chrom_brkpt['loci'] = bin_edge_ids

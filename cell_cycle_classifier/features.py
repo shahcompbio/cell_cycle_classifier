@@ -318,7 +318,7 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
     if use_rt_features:
         corr_data['norm_bk'] = None
         for library_id, library_cn_data in corr_data.groupby('library_id'):
-            mean_bk = library_cn_data.breakpoints.mean()
+            mean_bk = library_cn_data.breakpoints.mean() + np.finfo(float).eps
             corr_data.loc[library_cn_data.index, 'norm_bk'] = library_cn_data.breakpoints / mean_bk
 
     # print('corr_data.shape 2', corr_data.shape)

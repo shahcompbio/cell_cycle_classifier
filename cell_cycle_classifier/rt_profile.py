@@ -165,18 +165,22 @@ def calc_rt_features(rt, mat):
 		temp_rt = rt.loc[cell_data.index]
 		# print('temp_rt.shape', temp_rt.shape)
 
-		# find correlation between cell copy and rt features
-		r_ratio, pval_ratio = pearsonr(cell_data, temp_rt['rep_ratio'])
-		r_G1b, pval_G1b = pearsonr(cell_data, temp_rt['rep_G1b'])
-		r_S4, pval_S4 = pearsonr(cell_data, temp_rt['rep_S4'])
+		try:
+			# find correlation between cell copy and rt features
+			r_ratio, pval_ratio = pearsonr(cell_data, temp_rt['rep_ratio'])
+			r_G1b, pval_G1b = pearsonr(cell_data, temp_rt['rep_G1b'])
+			r_S4, pval_S4 = pearsonr(cell_data, temp_rt['rep_S4'])
 
-		# find slope between cell copy and rt features
-		slope_ratio = np.polyfit(cell_data.astype('float').values, temp_rt['rep_ratio'].astype('float').values, 1)[1]
-		slope_G1b = np.polyfit(cell_data.astype('float').values, temp_rt['rep_G1b'].astype('float').values, 1)[1]
-		slope_S4 = np.polyfit(cell_data.astype('float').values, temp_rt['rep_S4'].astype('float').values, 1)[1]
-	
-		temp = [r_ratio, pval_ratio, r_G1b, pval_G1b,
-				r_S4, pval_S4, slope_ratio, slope_G1b, slope_S4]
+			# find slope between cell copy and rt features
+			slope_ratio = np.polyfit(cell_data.astype('float').values, temp_rt['rep_ratio'].astype('float').values, 1)[1]
+			slope_G1b = np.polyfit(cell_data.astype('float').values, temp_rt['rep_G1b'].astype('float').values, 1)[1]
+			slope_S4 = np.polyfit(cell_data.astype('float').values, temp_rt['rep_S4'].astype('float').values, 1)[1]
+		
+			temp = [r_ratio, pval_ratio, r_G1b, pval_G1b,
+					r_S4, pval_S4, slope_ratio, slope_G1b, slope_S4]
+		except:
+			temp = [np.nan] * 9
+		
 		df.loc[cell_name] = temp
 
 	return df

@@ -84,8 +84,12 @@ def predict(classifier, feature_data, feature_names=None,
 
     print('feature names', feature_names)
     print('feature columns', feature_data.columns)
+    print('feature_data.shape', feature_data.shape)
 
-    X = feature_data[feature_names].values
+    # drop cells with NaN values (not enough loci per cell to compute correlation or slope)
+    X = feature_data[feature_names].dropna().values
+
+    print('X.shape', X.shape)
 
     y_pred = classifier.predict(X)
     y_pred_proba = classifier.predict_proba(X)[::,1]

@@ -87,7 +87,8 @@ def predict(classifier, feature_data, feature_names=None,
     print('feature_data.shape', feature_data.shape)
 
     # drop cells with NaN values (not enough loci per cell to compute correlation or slope)
-    X = feature_data[feature_names].dropna().values
+    feature_data.dropna(subset=feature_names, inplace=True)
+    X = feature_data[feature_names].values
 
     print('X.shape', X.shape)
 

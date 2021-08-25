@@ -1,3 +1,4 @@
+import logging
 import pyBigWig
 import pandas as pd
 import numpy as np
@@ -138,47 +139,35 @@ def sort_PCs_by_gc_correlation(pca_data, components, gc_mat):
 
 def add_pca_features(library_cn_data, num_pcs=3, rt=None):
 	""" Takes in library_cn_data and adds pca features for each cell. """
-	print('\nin add_pca_features()...')
-	print('library_cn_data.shape', library_cn_data.shape)
+	logging.info('in add_pca_features()...')
 	mat = get_mat(library_cn_data, values='copy2_1')
 	gc_mat = get_mat(library_cn_data, values='gc')
-	print('mat.shape', mat.shape)
-	print('gc_mat.shape', gc_mat.shape)
 
 	# filter out null
 	num_null = mat.isnull().sum(axis=1)
 	mat = mat[num_null <= 800]
 	mat = mat.dropna(axis='columns')
 	gc_mat = gc_mat[mat.columns]
-	print('mat.shape', mat.shape)
-	print('gc_mat.shape', gc_mat.shape)
 
 	# run pca to get scores and loadings
 	transformed, components = run_pca(mat, 10)
 
 	# store components as df with genomic position as the index
 	components = pd.DataFrame(components.T, index=mat.columns)
-	print('components.shape', components.shape)
 
 	if rt is not None:
-		print('rt is not None')
 		# any genomic loci dropped should also be removed from rt
 		rt = rt.loc[mat.columns, :]
-		print('rt.shape', rt.shape)
 		# re-order PCs so that they are ranked by the replication timing correlation
 		pca_data = sort_PCs_by_rt_correlation(rt, components, transformed, num_pcs, mat)
 	# keep PCs in their original order
 	else:
-		print('rt is None')
 		pca_data = pd.DataFrame(transformed, index=mat.index)
 		pca_data = sort_PCs_by_gc_correlation(pca_data, components, gc_mat)
 		pca_data = pca_data.iloc[:, :num_pcs]
 		pca_data = pca_data.reset_index().rename(columns={'index': 'cell_id'})
 
-	print('pca_data.shape', pca_data.shape)
-	print('library_cn_data.shape a', library_cn_data.shape)
 	library_cn_data = pd.merge(library_cn_data, pca_data, on='cell_id')
-	print('library_cn_data.shape b', library_cn_data.shape)
 
 	return library_cn_data
 

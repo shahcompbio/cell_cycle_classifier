@@ -92,9 +92,7 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         pandas.DataFrame: Feature data
     """
 
-    # print('number of cells in cn_data 1', cn_data.cell_id.drop_duplicates().shape)
     cn_data = cn_data.merge(align_metrics_data[['cell_id', 'median_insert_size']])
-    # print('number of cells in cn_data 2', cn_data.cell_id.drop_duplicates().shape)
 
     corr_data = []
 
@@ -228,18 +226,11 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
                 fig.savefig(figures_prefix + f'{library_id}_useinsert{use_insert_size}_gc_corrected.pdf')
 
         if use_rt_features:
-            # print('use_rt_features is True')
-            # print('library_cn_data.shape 1a', library_cn_data.shape)
             library_cn_data = add_uniqe_bk(library_cn_data)
             rt, library_cn_data, filtered_mat = add_rt_features(library_cn_data)
-            # print('library_cn_data.shape 1b', library_cn_data.shape)
 
         if use_pca_features and use_rt_features:
-            # print('use_pca_features is True')
-            # print('library_cn_data.shape 2a', library_cn_data.shape)
             library_cn_data = add_pca_features(library_cn_data, rt=rt)
-            # print('library_cn_data.shape 2b', library_cn_data.shape)
-
 
         if use_pca_features and not use_rt_features:
             library_cn_data = add_pca_features(library_cn_data)
@@ -288,8 +279,6 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
 
         library_corr_data = pd.DataFrame(library_corr_data)
         library_corr_data['library_id'] = library_id
-        # print('library_corr_data.shape', library_corr_data.shape)
-        # print('number of cells in library_corr_data', library_corr_data.cell_id.drop_duplicates().shape)
 
         corr_data.append(library_corr_data)
 
@@ -302,9 +291,6 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         plt.close('all')
 
     corr_data = pd.concat(corr_data, sort=True, ignore_index=True)
-    # print('corr_data.shape 1', corr_data.shape)
-    # print('number of cells in corr_data 1', corr_data.cell_id.drop_duplicates().shape)
-    # corr_data = corr_data.dropna()
     
     ploidy = cn_data.groupby('cell_id')['state'].mean().rename('ploidy').reset_index()
 
@@ -320,9 +306,6 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         for library_id, library_cn_data in corr_data.groupby('library_id'):
             mean_bk = library_cn_data.breakpoints.mean() + np.finfo(float).eps
             corr_data.loc[library_cn_data.index, 'norm_bk'] = library_cn_data.breakpoints / mean_bk
-
-    # print('corr_data.shape 2', corr_data.shape)
-    # print('number of cells in corr_data 2', corr_data.cell_id.drop_duplicates().shape)
     
     return corr_data
 
@@ -442,45 +425,6 @@ def get_data(prefix, sas, curated_labels=False):
         cn_data.drop(columns=['new_cell_cycle_state'], inplace=True)
         metrics_data.drop(columns=['new_cell_cycle_state'], inplace=True)
 
-    # logging.info("before any G1/G2 filtering log_likelihood")
-    # logging.info(metrics_data.shape)
-    # logging.info(cn_data.shape)
-
-    # Remove G1/G2 cells with log_likelihood < -7000
-    # metrics_data = metrics_data.drop(metrics_data.query('cell_cycle_state != "S" & log_likelihood < -7000').index)
-    # cn_data = cn_data.drop(cn_data.query('cell_cycle_state != "S" & log_likelihood < -7000').index)
-    # logging.info("after filtering log_likelihood")
-    # logging.info(metrics_data.shape)
-    # logging.info(cn_data.shape)
-
-    # # Remove G1/G2 cells with MBRSM_dispersion > 0.5
-    # metrics_data = metrics_data.drop(metrics_data.query('cell_cycle_state != "S" & MBRSM_dispersion > 0.5').index)
-    # cn_data = cn_data.drop(cn_data.query('cell_cycle_state != "S" & MBRSM_dispersion > 0.5').index)
-    # logging.info("after filtering MBRSM_dispersion")
-    # logging.info(metrics_data.shape)
-    # logging.info(cn_data.shape)
-
-    # # Remove G1/G2 cells with MBRSI_dispersion_non_integerness > 0.5
-    # metrics_data = metrics_data.drop(metrics_data.query('cell_cycle_state != "S" & MBRSI_dispersion_non_integerness > 0.5').index)
-    # cn_data = cn_data.drop(cn_data.query('cell_cycle_state != "S" & MBRSI_dispersion_non_integerness > 0.5').index)
-    # logging.info("after filtering MBRSI_dispersion_non_integerness")
-    # logging.info(metrics_data.shape)
-    # logging.info(cn_data.shape)
-
-    # # Remove G1/G2 cells with mean_state_mads > 0.15
-    # metrics_data = metrics_data.drop(metrics_data.query('cell_cycle_state != "S" & mean_state_mads > 0.15').index)
-    # cn_data = cn_data.drop(cn_data.query('cell_cycle_state != "S" & mean_state_mads > 0.15').index)
-    # logging.info("after filtering mean_state_mads")
-    # logging.info(metrics_data.shape)
-    # logging.info(cn_data.shape)
-
-    # # Remove G1/G2 cells with mad_hmmcopy > 0.20
-    # metrics_data = metrics_data.drop(metrics_data.query('cell_cycle_state != "S" & mad_hmmcopy > 0.20').index)
-    # cn_data = cn_data.drop(cn_data.query('cell_cycle_state != "S" & mad_hmmcopy > 0.20').index)
-    # logging.info("after filtering mad_hmmcopy")
-    # logging.info(metrics_data.shape)
-    # logging.info(cn_data.shape)
-
     return cn_data, metrics_data, align_metrics_data
 
 
@@ -513,8 +457,6 @@ def get_features(
     """
 
     cn_data, metrics_data, align_metrics_data = get_data(training_url_prefix, shared_access_signature, curated_labels)
-
-    # print('number of cells in cn_data 0', cn_data.cell_id.drop_duplicates().shape)
 
     np.random.seed(random_seed)
 

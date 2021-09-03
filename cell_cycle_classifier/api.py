@@ -88,29 +88,32 @@ def train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=Non
             use_pca_features=False
         )
 
-        logging.info('training a classifier for non-human cells')
-        if use_curated_labels:
-            training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/curated_feature_data_v2.csv')
-        else:
-            training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/feature_data.csv.gz')
-        training_data_vanilla = pd.read_csv(training_data_filename)
-        classifier_vanilla, stats, __, __, __, __ = model.train_test_model(
-            training_data_vanilla,
-            figures_prefix=figures_prefix_nonhuman,
-            random_seed=42,
-            use_rt_features=False,
-            use_pca_features=False
-        )
+        # if all cells get filtered entirely when calculating features
+        # then we can jump out of non-human analysis
+        if not feature_data_nonhuman.empty:
+            logging.info('training a classifier for non-human cells')
+            if use_curated_labels:
+                training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/curated_feature_data_v2.csv')
+            else:
+                training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/feature_data.csv.gz')
+            training_data_vanilla = pd.read_csv(training_data_filename)
+            classifier_vanilla, stats, __, __, __, __ = model.train_test_model(
+                training_data_vanilla,
+                figures_prefix=figures_prefix_nonhuman,
+                random_seed=42,
+                use_rt_features=False,
+                use_pca_features=False
+            )
 
-        logging.info('predicting cell cycle for non-human cells')
-        predictions_nonhuman = model.predict(
-            classifier_vanilla,
-            feature_data_nonhuman,
-            use_rt_features=False,
-            use_pca_features=False
-        )
+            logging.info('predicting cell cycle for non-human cells')
+            predictions_nonhuman = model.predict(
+                classifier_vanilla,
+                feature_data_nonhuman,
+                use_rt_features=False,
+                use_pca_features=False
+            )
 
-        predictions = pd.concat([predictions, predictions_nonhuman])
+            predictions = pd.concat([predictions, predictions_nonhuman])
 
     predictions = predictions.merge(metrics_data[['cell_id']].drop_duplicates(), how='right')
     predictions['is_s_phase'] = predictions['is_s_phase'].fillna(False)

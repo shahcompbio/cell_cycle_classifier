@@ -259,11 +259,11 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
             correlation2, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy3_0'])
             correlation3, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy3_1'])
             correlation, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['norm_reads'])
-            slope0 = np.polyfit(cell_data['gc'].values, cell_data['copy2_0'].values, 1)[1]
-            slope1 = np.polyfit(cell_data['gc'].values, cell_data['copy2_1'].values, 1)[1]
-            slope3 = np.polyfit(cell_data['gc'].values, cell_data['copy3_0'].values, 1)[1]
-            slope2 = np.polyfit(cell_data['gc'].values, cell_data['copy3_1'].values, 1)[1]
-            slope = np.polyfit(cell_data['gc'].values, cell_data['norm_reads'].values, 1)[1]
+            slope0 = np.polyfit(cell_data['gc'].values, cell_data['copy2_0'].values, 1)[0]
+            slope1 = np.polyfit(cell_data['gc'].values, cell_data['copy2_1'].values, 1)[0]
+            slope3 = np.polyfit(cell_data['gc'].values, cell_data['copy3_0'].values, 1)[0]
+            slope2 = np.polyfit(cell_data['gc'].values, cell_data['copy3_1'].values, 1)[0]
+            slope = np.polyfit(cell_data['gc'].values, cell_data['norm_reads'].values, 1)[0]
             temp_dict = dict(
                     correlation=correlation,
                     correlation0=correlation0,

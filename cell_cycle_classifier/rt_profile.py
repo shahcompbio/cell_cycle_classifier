@@ -101,6 +101,7 @@ def get_rt_annotation(mat):
 			G2_intensity = G2_intensity[0]
 		except:
 			logging.info('failed to extract intensities from bigWig')
+			logging.info('{}, start: {}, stop: {}'.format(chr_name, start, stop))
 			mat.loc[key, 'rep_argmax'] = np.nan
 			mat.loc[key, 'rep_ratio'] = np.nan
 			mat.loc[key, 'rep_G1b'] = np.nan

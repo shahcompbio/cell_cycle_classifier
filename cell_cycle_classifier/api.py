@@ -117,4 +117,4 @@ def train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=Non
     predictions = predictions.merge(metrics_data[['cell_id']].drop_duplicates(), how='right')
     predictions['is_s_phase'] = predictions['is_s_phase'].fillna(False)
 
-    return predictions
+    return predictions, feature_data

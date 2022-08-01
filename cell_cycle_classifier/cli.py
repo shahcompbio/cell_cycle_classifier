@@ -383,15 +383,20 @@ def save_y_arrays(yg1, yg2, yp1, yp2, ypp1, ypp2, cell_ids1, cell_ids2):
 @click.argument('align_metrics_filename')
 @click.argument('predictions_filename')
 @click.option('--figures_prefix')
-def train_classify(cn_filename, metrics_filename, align_metrics_filename, predictions_filename, figures_prefix=None):
+@click.option('--features_filename')
+def train_classify(cn_filename, metrics_filename, align_metrics_filename, predictions_filename, figures_prefix=None, features_filename=None):
     cn_data = pd.read_csv(cn_filename)
     metrics_data = pd.read_csv(metrics_filename)
     align_metrics_data = pd.read_csv(align_metrics_filename)
 
-    predictions = api.train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=figures_prefix,
-                        use_rt_features=True, use_pca_features=False, use_curated_labels=True)
+    predictions, features = api.train_classify(cn_data, metrics_data, align_metrics_data,
+                                               figures_prefix=figures_prefix,  use_curated_labels=True,
+                                               use_rt_features=True, use_pca_features=False)
 
     predictions.to_csv(predictions_filename, index=False)
+
+    if features_filename:
+        features.to_csv(features_filename, index=False)
 
 
 if __name__ == '__main__':

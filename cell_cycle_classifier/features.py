@@ -11,16 +11,18 @@ from sklearn.utils import shuffle
 
 
 all_feature_names = [
-    'slope',
-    'slope0',
-    'slope1',
-    'slope2',
-    'slope3',
-    'correlation',
-    'correlation0',
-    'correlation1',
-    'correlation2',
-    'correlation3',
+    'madn',
+    'total_mapped_reads',
+    # 'slope',
+    # 'slope0',
+    # 'slope1',
+    # 'slope2',
+    # 'slope3',
+    # 'correlation',
+    # 'correlation0',
+    # 'correlation1',
+    # 'correlation2',
+    # 'correlation3',
     'percent_duplicate_reads',
     'mean_insert_size',
     'unpaired_mapped_reads',
@@ -98,167 +100,174 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
 
         library_cn_data = library_cn_data.merge(
             library_cn_data.groupby('cell_id')['reads'].sum().rename('total_reads').reset_index())
-        library_cn_data['norm_reads'] = 1e6 * library_cn_data['reads'] / library_cn_data['total_reads']
+        library_cn_data['rpm'] = 1e6 * library_cn_data['reads'] / library_cn_data['total_reads']
         library_cn_data = library_cn_data.query('state > 0').copy()
-        library_cn_data['norm_reads'] = library_cn_data['norm_reads'] / library_cn_data['state']
+        library_cn_data['norm_reads'] = library_cn_data['rpm'] / library_cn_data['state']
 
         if len(library_cn_data.index) == 0:
             logging.warning(f'library {library_id} filtered entirely')
             continue
 
-        #
-        # Correct GC with aggregate data
-        #
-        logging.info(f'calculating aggregate features')
-        for use_norm_reads in (True, False):
-            if use_norm_reads:
-                reads_col = 'norm_reads'
-            else:
-                reads_col = 'reads'
+        # #
+        # # Correct GC with aggregate data
+        # #
+        # logging.info(f'calculating aggregate features')
+        # for use_norm_reads in (True, False):
+        #     if use_norm_reads:
+        #         reads_col = 'norm_reads'
+        #     else:
+        #         reads_col = 'reads'
 
-            if agg_proportion_s is not None:
-                cell_ids = subset_by_cell_cycle(library_cn_data, agg_proportion_s)
-                agg_data = library_cn_data[library_cn_data['cell_id'].isin(cell_ids)]
-            else:
-                agg_data = library_cn_data
-            agg_data = agg_data.groupby(['chr', 'start'])[reads_col].sum().reset_index()
-            agg_data = agg_data.merge(cn_data[['chr', 'start', 'gc']].drop_duplicates())
+        #     if agg_proportion_s is not None:
+        #         cell_ids = subset_by_cell_cycle(library_cn_data, agg_proportion_s)
+        #         agg_data = library_cn_data[library_cn_data['cell_id'].isin(cell_ids)]
+        #     else:
+        #         agg_data = library_cn_data
+        #     agg_data = agg_data.groupby(['chr', 'start'])[reads_col].sum().reset_index()
+        #     agg_data = agg_data.merge(cn_data[['chr', 'start', 'gc']].drop_duplicates())
 
-            z = np.polyfit(agg_data['gc'].values, agg_data[reads_col].astype(float).values, 3)
-            p = np.poly1d(z)
+        #     z = np.polyfit(agg_data['gc'].values, agg_data[reads_col].astype(float).values, 3)
+        #     p = np.poly1d(z)
 
-            if figures_prefix is not None:
-                fig = plt.figure(figsize=(3, 3))
-                ax = plt.gca()
-                seaborn.scatterplot(
-                    'gc', reads_col,
-                    data=agg_data,
-                    alpha=0.01,
-                    ax=ax)
-                x = np.linspace(agg_data['gc'].min(), agg_data['gc'].max(), 100)
-                plt.plot(x, p(x))
-                plt.title('agg fit on ' + library_id)
-                fig.savefig(figures_prefix + f'{library_id}_norm{use_norm_reads}_agg_fit.pdf')
+        #     if figures_prefix is not None:
+        #         fig = plt.figure(figsize=(3, 3))
+        #         ax = plt.gca()
+        #         seaborn.scatterplot(
+        #             'gc', reads_col,
+        #             data=agg_data,
+        #             alpha=0.01,
+        #             ax=ax)
+        #         x = np.linspace(agg_data['gc'].min(), agg_data['gc'].max(), 100)
+        #         plt.plot(x, p(x))
+        #         plt.title('agg fit on ' + library_id)
+        #         fig.savefig(figures_prefix + f'{library_id}_norm{use_norm_reads}_agg_fit.pdf')
 
-            library_cn_data['copy2_{}'.format(use_norm_reads * 1)] = library_cn_data[reads_col] / p(library_cn_data['gc'].values)
+        #     library_cn_data['copy2_{}'.format(use_norm_reads * 1)] = library_cn_data[reads_col] / p(library_cn_data['gc'].values)
 
-        #
-        # Correct GC with per cell data
-        #
-        logging.info(f'calculating independent features')
-        for use_insert_size in (True, False):
-            if agg_proportion_s is not None:
-                cell_ids = subset_by_cell_cycle(library_cn_data, agg_proportion_s)
-                agg_data = library_cn_data[library_cn_data['cell_id'].isin(cell_ids)]
-            else:
-                agg_data = library_cn_data
+        # #
+        # # Correct GC with per cell data
+        # #
+        # logging.info(f'calculating independent features')
+        # for use_insert_size in (True, False):
+        #     if agg_proportion_s is not None:
+        #         cell_ids = subset_by_cell_cycle(library_cn_data, agg_proportion_s)
+        #         agg_data = library_cn_data[library_cn_data['cell_id'].isin(cell_ids)]
+        #     else:
+        #         agg_data = library_cn_data
 
-            if use_insert_size:
-                X = agg_data[['gc', 'median_insert_size']].values
-            else:
-                X = agg_data[['gc']].values
+        #     if use_insert_size:
+        #         X = agg_data[['gc', 'median_insert_size']].values
+        #     else:
+        #         X = agg_data[['gc']].values
 
-            y = agg_data['norm_reads']
+        #     y = agg_data['norm_reads']
 
-            poly = PolynomialFeatures(3)
-            X_poly = poly.fit_transform(X)
+        #     poly = PolynomialFeatures(3)
+        #     X_poly = poly.fit_transform(X)
 
-            reg = LinearRegression().fit(X_poly, y)
+        #     reg = LinearRegression().fit(X_poly, y)
 
-            logging.info(
-                'Library {}, accuracy of Logistic regression classifier on training set: {:.4f}'
-                .format(library_id, reg.score(X_poly, y)))
+        #     logging.info(
+        #         'Library {}, accuracy of Logistic regression classifier on training set: {:.4f}'
+        #         .format(library_id, reg.score(X_poly, y)))
 
-            if use_insert_size:
-                X = library_cn_data[['gc', 'median_insert_size']].values
-            else:
-                X = library_cn_data[['gc']].values
+        #     if use_insert_size:
+        #         X = library_cn_data[['gc', 'median_insert_size']].values
+        #     else:
+        #         X = library_cn_data[['gc']].values
 
-            X_poly = poly.fit_transform(X)
+        #     X_poly = poly.fit_transform(X)
 
-            corrected_column = 'copy3_{}'.format(use_insert_size * 1)
-            library_cn_data[corrected_column] = library_cn_data['norm_reads'] / reg.predict(X_poly)
+        #     corrected_column = 'copy3_{}'.format(use_insert_size * 1)
+        #     library_cn_data[corrected_column] = library_cn_data['norm_reads'] / reg.predict(X_poly)
 
-            cell_id = library_cn_data.sort_values('total_reads')['cell_id'].iloc[0]
-            plot_data = library_cn_data.query('cell_id == "{}"'.format(cell_id))
+        #     cell_id = library_cn_data.sort_values('total_reads')['cell_id'].iloc[0]
+        #     plot_data = library_cn_data.query('cell_id == "{}"'.format(cell_id))
 
-            median_insert_size = plot_data['median_insert_size'].values[0]
-            if 'cell_cycle_state' in plot_data:
-                cell_cycle_state = plot_data['cell_cycle_state'].values[0]
-            else:
-                cell_cycle_state = 'unknown'
+        #     median_insert_size = plot_data['median_insert_size'].values[0]
+        #     if 'cell_cycle_state' in plot_data:
+        #         cell_cycle_state = plot_data['cell_cycle_state'].values[0]
+        #     else:
+        #         cell_cycle_state = 'unknown'
 
-            x = np.linspace(plot_data['gc'].min(), plot_data['gc'].max(), 100)
+        #     x = np.linspace(plot_data['gc'].min(), plot_data['gc'].max(), 100)
 
-            if use_insert_size:
-                x = np.array([x, median_insert_size * np.ones(x.shape)]).T
-            else:
-                x = np.array([x]).T
+        #     if use_insert_size:
+        #         x = np.array([x, median_insert_size * np.ones(x.shape)]).T
+        #     else:
+        #         x = np.array([x]).T
 
-            if figures_prefix is not None:
-                fig = plt.figure(figsize=(6, 6))
-                ax = plt.gca()
-                seaborn.scatterplot(
-                    'gc', 'norm_reads',
-                    data=plot_data,
-                    alpha=0.1,
-                    ax=ax)
-                plt.plot(x[:, 0], reg.predict(poly.fit_transform(x)))
-                plt.title('gc norm reads ' + corrected_column + ' ' + cell_id + ' ' + cell_cycle_state)
-                fig.savefig(figures_prefix + f'{library_id}_useinsert{use_insert_size}_gc_norm_reads.pdf')
+        #     if figures_prefix is not None:
+        #         fig = plt.figure(figsize=(6, 6))
+        #         ax = plt.gca()
+        #         seaborn.scatterplot(
+        #             'gc', 'norm_reads',
+        #             data=plot_data,
+        #             alpha=0.1,
+        #             ax=ax)
+        #         plt.plot(x[:, 0], reg.predict(poly.fit_transform(x)))
+        #         plt.title('gc norm reads ' + corrected_column + ' ' + cell_id + ' ' + cell_cycle_state)
+        #         fig.savefig(figures_prefix + f'{library_id}_useinsert{use_insert_size}_gc_norm_reads.pdf')
 
-            if figures_prefix is not None:
-                fig = plt.figure(figsize=(6, 6))
-                ax = plt.gca()
-                seaborn.scatterplot(
-                    'gc', corrected_column,
-                    data=plot_data,
-                    alpha=0.1,
-                    ax=ax)
-                plt.title('gc corrected ' + corrected_column + ' ' + cell_id + ' ' + cell_cycle_state)
-                fig.savefig(figures_prefix + f'{library_id}_useinsert{use_insert_size}_gc_corrected.pdf')
+        #     if figures_prefix is not None:
+        #         fig = plt.figure(figsize=(6, 6))
+        #         ax = plt.gca()
+        #         seaborn.scatterplot(
+        #             'gc', corrected_column,
+        #             data=plot_data,
+        #             alpha=0.1,
+        #             ax=ax)
+        #         plt.title('gc corrected ' + corrected_column + ' ' + cell_id + ' ' + cell_cycle_state)
+        #         fig.savefig(figures_prefix + f'{library_id}_useinsert{use_insert_size}_gc_corrected.pdf')
 
         logging.info(f'statistical tests and tabulation')
         library_corr_data = []
         for cell_id, cell_data in library_cn_data.groupby('cell_id'):
             if cell_data.empty:
                 continue
-            correlation0, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy2_0'])
-            correlation1, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy2_1'])
-            correlation2, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy3_0'])
-            correlation3, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy3_1'])
-            correlation, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['norm_reads'])
-            slope0 = np.polyfit(cell_data['gc'].values, cell_data['copy2_0'].values, 1)[1]
-            slope1 = np.polyfit(cell_data['gc'].values, cell_data['copy2_1'].values, 1)[1]
-            slope3 = np.polyfit(cell_data['gc'].values, cell_data['copy3_0'].values, 1)[1]
-            slope2 = np.polyfit(cell_data['gc'].values, cell_data['copy3_1'].values, 1)[1]
-            slope = np.polyfit(cell_data['gc'].values, cell_data['norm_reads'].values, 1)[1]
+
+            madn = np.median(np.abs(np.diff(cell_data['rpm'].values)))
+
+            # correlation0, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy2_0'])
+            # correlation1, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy2_1'])
+            # correlation2, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy3_0'])
+            # correlation3, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy3_1'])
+            # correlation, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['norm_reads'])
+            # slope0 = np.polyfit(cell_data['gc'].values, cell_data['copy2_0'].values, 1)[1]
+            # slope1 = np.polyfit(cell_data['gc'].values, cell_data['copy2_1'].values, 1)[1]
+            # slope3 = np.polyfit(cell_data['gc'].values, cell_data['copy3_0'].values, 1)[1]
+            # slope2 = np.polyfit(cell_data['gc'].values, cell_data['copy3_1'].values, 1)[1]
+            # slope = np.polyfit(cell_data['gc'].values, cell_data['norm_reads'].values, 1)[1]
             library_corr_data.append(dict(
-                correlation=correlation,
-                correlation0=correlation0,
-                correlation1=correlation1,
-                correlation2=correlation2,
-                correlation3=correlation3,
-                pvalue=pvalue,
+                madn=madn,
+                # correlation=correlation,
+                # correlation0=correlation0,
+                # correlation1=correlation1,
+                # correlation2=correlation2,
+                # correlation3=correlation3,
+                # pvalue=pvalue,
                 cell_id=cell_id,
-                slope0=slope0,
-                slope1=slope1,
-                slope2=slope2,
-                slope3=slope3,
-                slope=slope,
+                # slope0=slope0,
+                # slope1=slope1,
+                # slope2=slope2,
+                # slope3=slope3,
+                # slope=slope,
             ))
         library_corr_data = pd.DataFrame(library_corr_data)
         library_corr_data['library_id'] = library_id
 
+        # normalize madn scores within each library
+        library_corr_data['madn'] = library_corr_data['madn'] / library_corr_data['madn'].mean()
+
         corr_data.append(library_corr_data)
 
-        if figures_prefix is not None:
-            fig = plt.figure(figsize=(6, 6))
-            library_corr_data['correlation'].hist(bins=100)
-            plt.title('correlation hist ' + library_id)
-            fig.savefig(figures_prefix + f'{library_id}_correlation_hist.pdf')
+        # if figures_prefix is not None:
+        #     fig = plt.figure(figsize=(6, 6))
+        #     library_corr_data['correlation'].hist(bins=100)
+        #     plt.title('correlation hist ' + library_id)
+        #     fig.savefig(figures_prefix + f'{library_id}_correlation_hist.pdf')
 
-        plt.close('all')
+        # plt.close('all')
 
     ploidy = cn_data.groupby('cell_id')['state'].mean().rename('ploidy').reset_index()
 
@@ -444,27 +453,27 @@ def get_features(
     # 
     if figures_prefix is not None:
         logging.info('plotting')
-        g = seaborn.catplot(
-            y='breakpoints',
-            x='cell_cycle_state',
+        fig = plt.figure(figsize=(6, 6))
+        ax = plt.gca()
+        seaborn.scatterplot(
+            y='madn',
+            x='total_mapped_reads',
             data=testing_data,
-            kind='violin',
-            height=4,
+            hue='cell_cycle_state',
+            ax=ax
         )
-        g.fig.dpi = 150
-        g.axes[0][0].set_xlabel('Cell cycle state')
-        g.fig.savefig(figures_prefix + 'breakpoints.pdf', bbox_inches='tight')
+        fig.savefig(figures_prefix + 'testing_madn_v_reads.pdf', bbox_inches='tight')
 
-        g = seaborn.catplot(
-            y='correlation0',
-            x='cell_cycle_state',
-            data=testing_data,
-            kind='violin',
-            height=4,
+        fig = plt.figure(figsize=(6, 6))
+        ax = plt.gca()
+        seaborn.scatterplot(
+            y='madn',
+            x='total_mapped_reads',
+            data=training_data,
+            hue='cell_cycle_state',
+            ax=ax
         )
-        g.fig.dpi = 150
-        g.axes[0][0].set_xlabel('Cell cycle state')
-        g.fig.savefig(figures_prefix + 'correlation0.pdf', bbox_inches='tight')
+        fig.savefig(figures_prefix + 'training_madn_v_reads.pdf', bbox_inches='tight')
 
     training_data['training_context'] = 'training'
     testing_data['training_context'] = 'holdout'

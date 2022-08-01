@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from sklearn.utils import shuffle
+from cell_cycle_classifier.rt_profile import add_rt_features
+from cell_cycle_classifier.bk_profile import add_uniqe_bk
+from cell_cycle_classifier.pca import add_pca_features
 
 
 all_feature_names = [
@@ -27,6 +30,17 @@ all_feature_names = [
     'standard_deviation_insert_size',
     'ploidy',
     'breakpoints',
+    'r_ratio',
+    'r_G1b',
+    'r_S4',
+    'slope_ratio',
+    'slope_G1b',
+    'slope_S4',
+    'num_unique_bk',
+    'norm_bk',
+    'PC1',
+    'PC2',
+    'PC3'
 ]
 
 core_feature_names = [
@@ -58,11 +72,16 @@ align_metrics_columns = [
 
 def subset_by_cell_cycle(cn_data, proportion_s):
     cell_states = cn_data[['cell_id', 'cell_cycle_state']].drop_duplicates()
-    state_cell_ids = {}
+    state_cell_ids = {'G1': np.array([]), 'S': np.array([])}
+
     for cell_cycle_state, df in cell_states.groupby('cell_cycle_state'):
         state_cell_ids[cell_cycle_state] = shuffle(df['cell_id'].values.astype(str))
 
-    num_cells = len(state_cell_ids['S'])
+    logging.info('{} S phase cells'.format(len(state_cell_ids['S'])))
+    logging.info('{} G1 phase cells'.format(len(state_cell_ids['G1'])))
+
+    num_cells = min(len(state_cell_ids['S']), len(state_cell_ids['G1']))
+
     cell_ids = (
         list(state_cell_ids['S'][:int(proportion_s * num_cells)]) +
         list(state_cell_ids['G1'][:int((1. - proportion_s) * num_cells)])
@@ -71,7 +90,7 @@ def subset_by_cell_cycle(cn_data, proportion_s):
     return cell_ids
 
 
-def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion_s=None, figures_prefix=None):
+def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion_s=None, figures_prefix=None, use_rt_features=True, use_pca_features=True):
     """ Calculate features based on copy number data
     
     Args:
@@ -80,6 +99,8 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         align_metrics_data (pandas.DataFrame): Alignment metrics data
         agg_proportion_s (float, optional): Proportion of s to use in aggregate correction. Defaults to None, all available.
         figures_prefix (str, optional): Prefix for figures. Defaults to None, no figures.
+        use_rt_features (bool, optional): Mark false when replication timing features should be ignored.
+        use_pca_features (bool, optional): Mark false when PCA features should be ignored.
     
     Returns:
         pandas.DataFrame: Feature data
@@ -218,6 +239,16 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
                 plt.title('gc corrected ' + corrected_column + ' ' + cell_id + ' ' + cell_cycle_state)
                 fig.savefig(figures_prefix + f'{library_id}_useinsert{use_insert_size}_gc_corrected.pdf')
 
+        if use_rt_features:
+            library_cn_data = add_uniqe_bk(library_cn_data)
+            rt, library_cn_data, filtered_mat = add_rt_features(library_cn_data)
+
+        if use_pca_features and use_rt_features:
+            library_cn_data = add_pca_features(library_cn_data, rt=rt)
+
+        if use_pca_features and not use_rt_features:
+            library_cn_data = add_pca_features(library_cn_data)
+
         logging.info(f'statistical tests and tabulation')
         library_corr_data = []
         for cell_id, cell_data in library_cn_data.groupby('cell_id'):
@@ -228,25 +259,38 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
             correlation2, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy3_0'])
             correlation3, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy3_1'])
             correlation, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['norm_reads'])
-            slope0 = np.polyfit(cell_data['gc'].values, cell_data['copy2_0'].values, 1)[1]
-            slope1 = np.polyfit(cell_data['gc'].values, cell_data['copy2_1'].values, 1)[1]
-            slope3 = np.polyfit(cell_data['gc'].values, cell_data['copy3_0'].values, 1)[1]
-            slope2 = np.polyfit(cell_data['gc'].values, cell_data['copy3_1'].values, 1)[1]
-            slope = np.polyfit(cell_data['gc'].values, cell_data['norm_reads'].values, 1)[1]
-            library_corr_data.append(dict(
-                correlation=correlation,
-                correlation0=correlation0,
-                correlation1=correlation1,
-                correlation2=correlation2,
-                correlation3=correlation3,
-                pvalue=pvalue,
-                cell_id=cell_id,
-                slope0=slope0,
-                slope1=slope1,
-                slope2=slope2,
-                slope3=slope3,
-                slope=slope,
-            ))
+            slope0 = np.polyfit(cell_data['gc'].values, cell_data['copy2_0'].values, 1)[0]
+            slope1 = np.polyfit(cell_data['gc'].values, cell_data['copy2_1'].values, 1)[0]
+            slope3 = np.polyfit(cell_data['gc'].values, cell_data['copy3_0'].values, 1)[0]
+            slope2 = np.polyfit(cell_data['gc'].values, cell_data['copy3_1'].values, 1)[0]
+            slope = np.polyfit(cell_data['gc'].values, cell_data['norm_reads'].values, 1)[0]
+            temp_dict = dict(
+                    correlation=correlation,
+                    correlation0=correlation0,
+                    correlation1=correlation1,
+                    correlation2=correlation2,
+                    correlation3=correlation3,
+                    pvalue=pvalue,
+                    cell_id=cell_id,
+                    slope0=slope0,
+                    slope1=slope1,
+                    slope2=slope2,
+                    slope3=slope3,
+                    slope=slope)
+            if use_rt_features:
+                temp_dict['r_ratio'] = cell_data['r_ratio'].values[0]
+                temp_dict['r_G1b'] = cell_data['r_G1b'].values[0]  # all values should be same for the cell
+                temp_dict['r_S4'] = cell_data['r_S4'].values[0]  # all values should be same for the cell
+                temp_dict['slope_ratio'] = cell_data['slope_ratio'].values[0]
+                temp_dict['slope_G1b'] = cell_data['slope_G1b'].values[0]
+                temp_dict['slope_S4'] = cell_data['slope_S4'].values[0]
+                temp_dict['num_unique_bk'] = cell_data['num_unique_bk'].values[0]
+            if use_pca_features:
+                temp_dict['PC1'] = cell_data['PC1'].values[0]
+                temp_dict['PC2'] = cell_data['PC2'].values[0]
+                temp_dict['PC3'] = cell_data['PC3'].values[0]
+            library_corr_data.append(temp_dict)
+
         library_corr_data = pd.DataFrame(library_corr_data)
         library_corr_data['library_id'] = library_id
 
@@ -276,6 +320,13 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
     if 'cell_cycle_state' in metrics_data:
         corr_data = corr_data.merge(metrics_data[['cell_id', 'cell_cycle_state']].drop_duplicates())
     corr_data = corr_data.merge(ploidy)
+
+    # normalize the breakpoint count per library
+    if use_rt_features:
+        corr_data['norm_bk'] = None
+        for library_id, library_cn_data in corr_data.groupby('library_id'):
+            mean_bk = library_cn_data.breakpoints.mean() + np.finfo(float).eps
+            corr_data.loc[library_cn_data.index, 'norm_bk'] = library_cn_data.breakpoints / mean_bk
     
     return corr_data
 
@@ -306,7 +357,7 @@ cache_dir = './cachedir'
 memory = joblib.Memory(cache_dir, verbose=10)
 
 @memory.cache
-def get_data(prefix, sas):
+def get_data(prefix, sas, curated_labels=False):
     cn_data = []
     for cn_data_url in cn_data_urls:
         url = prefix + cn_data_url + sas
@@ -342,7 +393,8 @@ def get_data(prefix, sas):
     logging.info('library sizes:\n{}'.format(metrics_data.groupby('library_id').size()))
 
     cn_data = cn_data.merge(metrics_data[['cell_id']].drop_duplicates())
-    cn_data = cn_data.merge(metrics_data[['cell_id', 'experimental_condition']])
+    cn_data = cn_data.merge(metrics_data[['cell_id', 'experimental_condition', 'log_likelihood', 'MBRSM_dispersion',
+                                        'MBRSI_dispersion_non_integerness', 'mean_state_mads', 'mad_hmmcopy']])
 
     # Remap experimental conditions and filter
     conditions = {
@@ -370,6 +422,30 @@ def get_data(prefix, sas):
     metrics_data = metrics_data.query('cell_cycle_state != "D"')
     cn_data = cn_data.query('cell_cycle_state != "D"')
 
+    # have hand-curated labels replace the flow-determined cell cycle state
+    if curated_labels is not None:
+        curated_df = pd.read_csv(curated_labels)
+
+        # merge new_cell_cycle_state into metrics data
+        metrics_data = pd.merge(metrics_data, curated_df, how='left', on=['cell_id', 'cell_cycle_state'])
+
+        # copy flow-determined state for cells without new_cell_cycle_state
+        for key, row in metrics_data.iterrows():
+            if pd.isnull(row['new_cell_cycle_state']):
+                metrics_data.loc[key, 'new_cell_cycle_state'] = metrics_data.loc[key, 'cell_cycle_state']
+                metrics_data.loc[key, 'checked'] = False
+                metrics_data.loc[key, 'corrected'] = False
+
+        # merge assignments into cn_data
+        full_curated_df = metrics_data[['cell_id', 'new_cell_cycle_state', 'checked', 'corrected']]
+        cn_data = pd.merge(cn_data, full_curated_df, how='left', on='cell_id')
+
+        # assign new_cell_cycle_state to cell_cycle_state
+        cn_data.cell_cycle_state = cn_data.new_cell_cycle_state
+        metrics_data.cell_cycle_state = metrics_data.new_cell_cycle_state
+        cn_data.drop(columns=['new_cell_cycle_state'], inplace=True)
+        metrics_data.drop(columns=['new_cell_cycle_state'], inplace=True)
+
     return cn_data, metrics_data, align_metrics_data
 
 
@@ -381,6 +457,9 @@ def get_features(
         proportion_s_train=None,
         proportion_s_test=None,
         random_seed=None,
+        use_rt_features=True,
+        use_pca_features=True,
+        curated_labels=None
     ):
     """ Train and test the model given annotated input copy number data.
     
@@ -391,12 +470,14 @@ def get_features(
         proportion_s_train (float, optional): Proportion of s-phase used in aggregate correction. Defaults to None.
         proportion_s_test (float, optional): Proportion of s-phase used in aggregate correction for testing. Defaults to None.
         random_seed (int, optional): Random seed for selecting test set. Defaults to None.
-    
+        use_rt_features (bool, optional): Mark false when replication timing features should be ignored.
+        use_pca_features (bool, optional): Mark false when PCA features should be ignored.
+
     Returns:
         [type]: [description]
     """
 
-    cn_data, metrics_data, align_metrics_data = get_data(training_url_prefix, shared_access_signature)
+    cn_data, metrics_data, align_metrics_data = get_data(training_url_prefix, shared_access_signature, curated_labels)
 
     np.random.seed(random_seed)
 
@@ -410,6 +491,15 @@ def get_features(
     if feature_names is None:
         feature_names = all_feature_names
 
+    # remove rt or pca feature names if necessary
+    rt_features = ['r_ratio', 'r_G1b', 'r_S4', 'slope_ratio',
+                'slope_G1b', 'slope_S4', 'num_unique_bk', 'norm_bk']
+    pca_features = ['PC1', 'PC2', 'PC3']
+    if use_rt_features is False and set(rt_features).issubset(set(feature_names)):
+        feature_names = [x for x in feature_names if x not in rt_features]
+    if use_pca_features is False and set(pca_features).issubset(set(feature_names)):
+        feature_names = [x for x in feature_names if x not in pca_features]
+
     # Training features
     #
     training_figures_prefix = None
@@ -422,6 +512,8 @@ def get_features(
         align_metrics_data,
         agg_proportion_s=proportion_s_train,
         figures_prefix=training_figures_prefix,
+        use_rt_features=use_rt_features,
+        use_pca_features=use_pca_features
     )
 
     training_data = training_data.query('cell_cycle_state != "D"')
@@ -435,6 +527,8 @@ def get_features(
         metrics_data,
         align_metrics_data,
         agg_proportion_s=proportion_s_test,
+        use_rt_features=use_rt_features,
+        use_pca_features=use_pca_features
     )
 
     testing_data = testing_data.query('cell_cycle_state != "D"')

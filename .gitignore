@@ -62,3 +62,14 @@ target/
 #Ipython Notebook
 .ipynb_checkpoints
 
+# output files
+figures_*
+Y_*
+test_*
+temp_*
+err*.txt
+out*.txt
+*.pdf
+sample_split/
+curated_labels*/
+

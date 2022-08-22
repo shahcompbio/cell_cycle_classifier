@@ -23,12 +23,12 @@ all_feature_names = [
     # 'correlation1',
     # 'correlation2',
     # 'correlation3',
-    'percent_duplicate_reads',
-    'mean_insert_size',
-    'unpaired_mapped_reads',
-    'standard_deviation_insert_size',
-    'ploidy',
-    'breakpoints',
+    # 'percent_duplicate_reads',
+    # 'mean_insert_size',
+    # 'unpaired_mapped_reads',
+    # 'standard_deviation_insert_size',
+    # 'ploidy',
+    # 'breakpoints',
 ]
 
 core_feature_names = [

@@ -14,17 +14,17 @@ all_feature_names = [
     'slope',
     'slope0',
     'slope1',
-    'slope2',
+    # 'slope2',
     'slope3',
     'correlation',
     'correlation0',
     'correlation1',
     'correlation2',
-    'correlation3',
-    'percent_duplicate_reads',
-    'mean_insert_size',
-    'unpaired_mapped_reads',
-    'standard_deviation_insert_size',
+    # 'correlation3',
+    # 'percent_duplicate_reads',
+    # 'mean_insert_size',
+    # 'unpaired_mapped_reads',
+    # 'standard_deviation_insert_size',
     'ploidy',
     'breakpoints',
 ]
@@ -34,13 +34,13 @@ core_feature_names = [
     'correlation0',
     'correlation1',
     'correlation2',
-    'correlation3',
+    # 'correlation3',
     'library_id',
     'pvalue',
     'slope',
     'slope0',
     'slope1',
-    'slope2',
+    # 'slope2',
     'slope3'
 ]
 
@@ -71,13 +71,12 @@ def subset_by_cell_cycle(cn_data, proportion_s):
     return cell_ids
 
 
-def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion_s=None, figures_prefix=None):
+def calculate_features(cn_data, metrics_data, agg_proportion_s=None, figures_prefix=None):
     """ Calculate features based on copy number data
     
     Args:
         cn_data (pandas.DataFrame): HMMCopy reads data
         metrics_data (pandas.DataFrame): HMMCopy metrics data
-        align_metrics_data (pandas.DataFrame): Alignment metrics data
         agg_proportion_s (float, optional): Proportion of s to use in aggregate correction. Defaults to None, all available.
         figures_prefix (str, optional): Prefix for figures. Defaults to None, no figures.
     
@@ -85,7 +84,7 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         pandas.DataFrame: Feature data
     """
 
-    cn_data = cn_data.merge(align_metrics_data[['cell_id', 'median_insert_size']])
+    # cn_data = cn_data.merge(align_metrics_data[['cell_id', 'median_insert_size']])
 
     corr_data = []
 
@@ -146,7 +145,7 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
         # Correct GC with per cell data
         #
         logging.info(f'calculating independent features')
-        for use_insert_size in (True, False):
+        for use_insert_size in (False):
             if agg_proportion_s is not None:
                 cell_ids = subset_by_cell_cycle(library_cn_data, agg_proportion_s)
                 agg_data = library_cn_data[library_cn_data['cell_id'].isin(cell_ids)]
@@ -226,24 +225,24 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
             correlation0, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy2_0'])
             correlation1, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy2_1'])
             correlation2, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy3_0'])
-            correlation3, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy3_1'])
+            # correlation3, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['copy3_1'])
             correlation, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['norm_reads'])
             slope0 = np.polyfit(cell_data['gc'].values, cell_data['copy2_0'].values, 1)[1]
             slope1 = np.polyfit(cell_data['gc'].values, cell_data['copy2_1'].values, 1)[1]
             slope3 = np.polyfit(cell_data['gc'].values, cell_data['copy3_0'].values, 1)[1]
-            slope2 = np.polyfit(cell_data['gc'].values, cell_data['copy3_1'].values, 1)[1]
+            # slope2 = np.polyfit(cell_data['gc'].values, cell_data['copy3_1'].values, 1)[1]
             slope = np.polyfit(cell_data['gc'].values, cell_data['norm_reads'].values, 1)[1]
             library_corr_data.append(dict(
                 correlation=correlation,
                 correlation0=correlation0,
                 correlation1=correlation1,
                 correlation2=correlation2,
-                correlation3=correlation3,
+                # correlation3=correlation3,
                 pvalue=pvalue,
                 cell_id=cell_id,
                 slope0=slope0,
                 slope1=slope1,
-                slope2=slope2,
+                # slope2=slope2,
                 slope3=slope3,
                 slope=slope,
             ))
@@ -262,15 +261,18 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
 
     ploidy = cn_data.groupby('cell_id')['state'].mean().rename('ploidy').reset_index()
 
-    if not corr_data:
-        corr_data = pd.DataFrame(index=align_metrics_data.index, columns=core_feature_names)
-        corr_data = corr_data.fillna(0)
-        corr_data['cell_id'] = align_metrics_data.cell_id
-    else:
-        corr_data = pd.concat(corr_data, sort=True, ignore_index=True)
-        corr_data = corr_data.dropna()
+    # if not corr_data:
+    #     corr_data = pd.DataFrame(index=align_metrics_data.index, columns=core_feature_names)
+    #     corr_data = corr_data.fillna(0)
+    #     corr_data['cell_id'] = align_metrics_data.cell_id
+    # else:
+    #     corr_data = pd.concat(corr_data, sort=True, ignore_index=True)
+    #     corr_data = corr_data.dropna()
 
-    corr_data = corr_data.merge(align_metrics_data[align_metrics_columns].drop_duplicates())
+    # corr_data = corr_data.merge(align_metrics_data[align_metrics_columns].drop_duplicates())
+
+    corr_data = pd.concat(corr_data, sort=True, ignore_index=True)
+    corr_data = corr_data.dropna()
 
     corr_data = corr_data.merge(metrics_data[['cell_id', 'breakpoints']].drop_duplicates())
     if 'cell_cycle_state' in metrics_data:
@@ -419,7 +421,7 @@ def get_features(
     training_data = calculate_features(
         cn_data[cn_data['cell_id'].isin(training_cell_ids)],
         metrics_data,
-        align_metrics_data,
+        # align_metrics_data,
         agg_proportion_s=proportion_s_train,
         figures_prefix=training_figures_prefix,
     )
@@ -433,7 +435,7 @@ def get_features(
     testing_data = calculate_features(
         cn_data[cn_data['cell_id'].isin(test_cell_ids)],
         metrics_data,
-        align_metrics_data,
+        # align_metrics_data,
         agg_proportion_s=proportion_s_test,
     )
 

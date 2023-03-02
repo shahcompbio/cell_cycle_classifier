@@ -54,7 +54,7 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
 @click.argument('metrics_filename')
 @click.argument('predictions_filename')
 @click.option('--figures_prefix')
-def train_classify(cn_filename, metrics_filename, align_metrics_filename_jk_lol, predictions_filename, figures_prefix=None):
+def train_classify(cn_filename, metrics_filename, predictions_filename, figures_prefix=None):
     cn_data = pd.read_csv(cn_filename)
     metrics_data = pd.read_csv(metrics_filename)
 

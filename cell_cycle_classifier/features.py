@@ -145,7 +145,7 @@ def calculate_features(cn_data, metrics_data, agg_proportion_s=None, figures_pre
         # Correct GC with per cell data
         #
         logging.info(f'calculating independent features')
-        for use_insert_size in (False):
+        for use_insert_size in [False]:
             if agg_proportion_s is not None:
                 cell_ids = subset_by_cell_cycle(library_cn_data, agg_proportion_s)
                 agg_data = library_cn_data[library_cn_data['cell_id'].isin(cell_ids)]
@@ -181,7 +181,7 @@ def calculate_features(cn_data, metrics_data, agg_proportion_s=None, figures_pre
             cell_id = library_cn_data.sort_values('total_reads')['cell_id'].iloc[0]
             plot_data = library_cn_data.query('cell_id == "{}"'.format(cell_id))
 
-            median_insert_size = plot_data['median_insert_size'].values[0]
+            # median_insert_size = plot_data['median_insert_size'].values[0]
             if 'cell_cycle_state' in plot_data:
                 cell_cycle_state = plot_data['cell_cycle_state'].values[0]
             else:
@@ -189,10 +189,11 @@ def calculate_features(cn_data, metrics_data, agg_proportion_s=None, figures_pre
 
             x = np.linspace(plot_data['gc'].min(), plot_data['gc'].max(), 100)
 
-            if use_insert_size:
-                x = np.array([x, median_insert_size * np.ones(x.shape)]).T
-            else:
-                x = np.array([x]).T
+            # if use_insert_size:
+            #     x = np.array([x, median_insert_size * np.ones(x.shape)]).T
+            # else:
+            #     x = np.array([x]).T
+            x = np.array([x]).T
 
             if figures_prefix is not None:
                 fig = plt.figure(figsize=(6, 6))

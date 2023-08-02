@@ -113,7 +113,20 @@ def train_test_model(
     fpr, tpr, _ = metrics.roc_curve(y, y_pred_proba)
 
     if figures_prefix:
-        fig = plt.figure()
+        SMALL_SIZE = 7
+        MEDIUM_SIZE = 8
+        BIGGER_SIZE = 10
+        plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+        plt.rc('axes', titlesize=MEDIUM_SIZE)     # fontsize of the axes title
+        plt.rc('axes', labelsize=SMALL_SIZE)    # fontsize of the x and y labels
+        plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+        plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+        plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+        plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+        plt.rcParams['svg.fonttype'] = 'none'
+        plt.rcParams['pdf.use14corefonts'] = True
+
+        fig = plt.figure(figsize=(4, 4))
         auc = metrics.roc_auc_score(y, y_pred_proba)
         plt.plot(fpr,tpr,label="AUC={:.2f}, n={}".format(auc, y.shape[0]))
         plt.plot([0, 1], [0, 1], color='navy', linestyle='--')
@@ -123,9 +136,12 @@ def train_test_model(
         seaborn.despine(offset=True, trim=True)
         fig.savefig(figures_prefix + 'roc.pdf', bbox_inches='tight')
     
-        fig = plt.figure()
+        fig = plt.figure(figsize=(4, 4))
         feature_importance = pd.Series(dict(zip(feature_names, classifier.feature_importances_)))
         feature_importance.plot.bar()
+        plt.ylabel('Feature importance')
+        seaborn.despine(offset=True, trim=True)
+        plt.xticks(rotation=90)
         fig.savefig(figures_prefix + 'features.pdf', bbox_inches='tight')
 
     stats = dict(

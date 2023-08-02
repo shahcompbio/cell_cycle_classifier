@@ -14,8 +14,8 @@ all_feature_names = [
     'slope',
     'slope0',
     'slope1',
-    # 'slope2',
-    'slope3',
+    'slope2',
+    # 'slope3',
     'correlation',
     'correlation0',
     'correlation1',
@@ -230,8 +230,8 @@ def calculate_features(cn_data, metrics_data, agg_proportion_s=None, figures_pre
             correlation, pvalue = scipy.stats.spearmanr(cell_data['gc'], cell_data['norm_reads'])
             slope0 = np.polyfit(cell_data['gc'].values, cell_data['copy2_0'].values, 1)[1]
             slope1 = np.polyfit(cell_data['gc'].values, cell_data['copy2_1'].values, 1)[1]
-            slope3 = np.polyfit(cell_data['gc'].values, cell_data['copy3_0'].values, 1)[1]
-            # slope2 = np.polyfit(cell_data['gc'].values, cell_data['copy3_1'].values, 1)[1]
+            slope2 = np.polyfit(cell_data['gc'].values, cell_data['copy3_0'].values, 1)[1]
+            # slope3 = np.polyfit(cell_data['gc'].values, cell_data['copy3_1'].values, 1)[1]
             slope = np.polyfit(cell_data['gc'].values, cell_data['norm_reads'].values, 1)[1]
             library_corr_data.append(dict(
                 correlation=correlation,
@@ -243,8 +243,8 @@ def calculate_features(cn_data, metrics_data, agg_proportion_s=None, figures_pre
                 cell_id=cell_id,
                 slope0=slope0,
                 slope1=slope1,
-                # slope2=slope2,
-                slope3=slope3,
+                slope2=slope2,
+                # slope3=slope3,
                 slope=slope,
             ))
         library_corr_data = pd.DataFrame(library_corr_data)

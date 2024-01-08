@@ -6,7 +6,7 @@ import cell_cycle_classifier.model as model
 import cell_cycle_classifier.features as features
 
 
-def train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=None):
+def train_classify(cn_data, metrics_data, figures_prefix=None):
     logging.info('training a classifier')
 
     training_data_filename = pkg_resources.resource_filename('cell_cycle_classifier', 'data/training/feature_data.csv.gz')
@@ -29,7 +29,6 @@ def train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=Non
     feature_data = features.calculate_features(
         cn_data,
         metrics_data,
-        align_metrics_data,
         figures_prefix=figures_prefix,
     )
 

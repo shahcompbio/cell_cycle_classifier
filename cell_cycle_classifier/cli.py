@@ -7,7 +7,7 @@ import pandas as pd
 
 import cell_cycle_classifier.model as model
 import cell_cycle_classifier.features as features
-import cell_cycle_classifier.api as api 
+import cell_cycle_classifier.api as api
 
 LOGGING_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 
@@ -55,12 +55,11 @@ def get_features(training_url_prefix, features_filename, shared_access_signature
 @click.argument('align_metrics_filename')
 @click.argument('predictions_filename')
 @click.option('--figures_prefix')
-def train_classify(cn_filename, metrics_filename, align_metrics_filename, predictions_filename, figures_prefix=None):
+def train_classify(cn_filename, metrics_filename, predictions_filename, figures_prefix=None):
     cn_data = pd.read_csv(cn_filename)
     metrics_data = pd.read_csv(metrics_filename)
-    align_metrics_data = pd.read_csv(align_metrics_filename)
 
-    predictions = api.train_classify(cn_data, metrics_data, align_metrics_data, figures_prefix=figures_prefix)
+    predictions = api.train_classify(cn_data, metrics_data, figures_prefix=figures_prefix)
 
     predictions.to_csv(predictions_filename, index=False)
 

@@ -67,25 +67,25 @@ def subset_by_cell_cycle(cn_data, proportion_s):
         list(state_cell_ids['S'][:int(proportion_s * num_cells)]) +
         list(state_cell_ids['G1'][:int((1. - proportion_s) * num_cells)])
     )
-    
+
     return cell_ids
 
 
-def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion_s=None, figures_prefix=None):
+def calculate_features(cn_data, metrics_data, agg_proportion_s=None, figures_prefix=None):
     """ Calculate features based on copy number data
-    
+
     Args:
         cn_data (pandas.DataFrame): HMMCopy reads data
         metrics_data (pandas.DataFrame): HMMCopy metrics data
         align_metrics_data (pandas.DataFrame): Alignment metrics data
         agg_proportion_s (float, optional): Proportion of s to use in aggregate correction. Defaults to None, all available.
         figures_prefix (str, optional): Prefix for figures. Defaults to None, no figures.
-    
+
     Returns:
         pandas.DataFrame: Feature data
     """
 
-    cn_data = cn_data.merge(align_metrics_data[['cell_id', 'median_insert_size']])
+    cn_data = cn_data.merge(metrics_data[['cell_id', 'median_insert_size']])
 
     corr_data = []
 
@@ -276,7 +276,7 @@ def calculate_features(cn_data, metrics_data, align_metrics_data, agg_proportion
     if 'cell_cycle_state' in metrics_data:
         corr_data = corr_data.merge(metrics_data[['cell_id', 'cell_cycle_state']].drop_duplicates())
     corr_data = corr_data.merge(ploidy)
-    
+
     return corr_data
 
 
@@ -383,7 +383,7 @@ def get_features(
         random_seed=None,
     ):
     """ Train and test the model given annotated input copy number data.
-    
+
     Args:
         shared_access_signature (str): Shared access signature for accessing training data.
         figures_prefix (str, optional): Prefix for figure filenames. Defaults to None.
@@ -391,7 +391,7 @@ def get_features(
         proportion_s_train (float, optional): Proportion of s-phase used in aggregate correction. Defaults to None.
         proportion_s_test (float, optional): Proportion of s-phase used in aggregate correction for testing. Defaults to None.
         random_seed (int, optional): Random seed for selecting test set. Defaults to None.
-    
+
     Returns:
         [type]: [description]
     """
@@ -428,7 +428,7 @@ def get_features(
     training_data = training_data.query('ploidy < 6')
 
     # Testing features
-    # 
+    #
     logging.info('calculating test features')
     testing_data = calculate_features(
         cn_data[cn_data['cell_id'].isin(test_cell_ids)],
@@ -441,7 +441,7 @@ def get_features(
     logging.info(testing_data.groupby('cell_cycle_state').size())
 
     # Plot
-    # 
+    #
     if figures_prefix is not None:
         logging.info('plotting')
         g = seaborn.catplot(

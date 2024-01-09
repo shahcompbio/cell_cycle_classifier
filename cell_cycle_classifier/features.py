@@ -263,14 +263,14 @@ def calculate_features(cn_data, metrics_data, agg_proportion_s=None, figures_pre
     ploidy = cn_data.groupby('cell_id')['state'].mean().rename('ploidy').reset_index()
 
     if not corr_data:
-        corr_data = pd.DataFrame(index=align_metrics_data.index, columns=core_feature_names)
+        corr_data = pd.DataFrame(index=metrics_data.index, columns=core_feature_names)
         corr_data = corr_data.fillna(0)
-        corr_data['cell_id'] = align_metrics_data.cell_id
+        corr_data['cell_id'] = metrics_data.cell_id
     else:
         corr_data = pd.concat(corr_data, sort=True, ignore_index=True)
         corr_data = corr_data.dropna()
 
-    corr_data = corr_data.merge(align_metrics_data[align_metrics_columns].drop_duplicates())
+    corr_data = corr_data.merge(metrics_data[align_metrics_columns].drop_duplicates())
 
     corr_data = corr_data.merge(metrics_data[['cell_id', 'breakpoints']].drop_duplicates())
     if 'cell_cycle_state' in metrics_data:

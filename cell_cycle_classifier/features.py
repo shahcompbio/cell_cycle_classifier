@@ -85,6 +85,8 @@ def calculate_features(cn_data, metrics_data, agg_proportion_s=None, figures_pre
         pandas.DataFrame: Feature data
     """
 
+    cn_data['chr'] = cn_data['chr'].astype(str)
+
     cn_data = cn_data.merge(metrics_data[['cell_id', 'median_insert_size']])
 
     corr_data = []
